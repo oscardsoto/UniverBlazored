@@ -36,7 +36,7 @@ To use this library correctly, you must be familiarized with the Univer context 
 - Comments
 
 ## License
-Univer Blazored is distributed by an [Apache-2.0 license](https://github.com/oscardsoto/UniverBlazored/blob/main/LICENSE)
+Univer Blazored is distributed by an [Apache-2.0 license](https://github.com/oscardsoto/UniverBlazored/blob/master/LICENSE)
 
 "Univer" is a trademark of its respective owners. This project is not affiliated with or endorsed by the developers of Univer.
 
