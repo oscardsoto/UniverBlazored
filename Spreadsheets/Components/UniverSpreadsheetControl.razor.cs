@@ -1,0 +1,86 @@
+using System.ComponentModel;
+using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
+using UniverBlazored.Generic;
+using UniverBlazored.Generic.Services;
+using UniverBlazored.Spreadsheets.Data;
+using UniverBlazored.Spreadsheets.Data.Workbook;
+using UniverBlazored.Spreadsheets.Services;
+
+namespace UniverBlazored.Spreadsheets.Components;
+
+/// <summary>
+/// Spreadsheet component to Univer
+/// </summary>
+public partial class UniverSpreadsheetControl
+{
+    /// <summary>
+    /// Interop to Univer
+    /// </summary>
+    [Inject]
+    protected IUniverJsInterop? UniverInterop { get; set; }
+
+    /// <summary>
+    /// Listeners to the cells in Univer
+    /// </summary>
+    [Inject]
+    protected IUniverSpreadsheetListener? Listeners { get; set; }
+
+    bool isRendered = false;
+    string id = "uXlsxComp";
+
+    /// <summary>
+    /// Id for the component (Default is "uXlsxComp")
+    /// </summary>
+    /// <value></value>
+    [Parameter]
+    public string Id
+    {
+        get
+        {
+            return id;
+        }
+        
+        set
+        {
+            if (isRendered)
+                return;
+            id = value;
+        }
+    }
+
+    /// <summary>
+    /// Css Classes for the component
+    /// </summary>
+    /// <value></value>
+    [Parameter]
+    public string CssClass { get; set; } = "";
+
+    /// <summary>
+    /// Agent for the most common operations in Univer
+    /// </summary>
+    public UniverSpreadsheetAgent? Agent { get; private set; }
+
+    /// <summary>
+    /// User Manager Service for the Univer's component
+    /// </summary>
+    public UniverUserManager? UserManager { get; private set; }
+
+    /// <summary>
+    /// Initialize both the Agent, the user Manager and the listeners after rendering the component
+    /// </summary>
+    /// <param name="firstRender"></param>
+    /// <returns></returns>
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await UniverInterop?.InitializeAsync(Id);
+            Listeners?.InitializeListenersAsync();
+            Agent       = new(UniverInterop);
+            UserManager = new(UniverInterop);
+            isRendered  = true;
+            StateHasChanged();
+        }
+    }
+}
