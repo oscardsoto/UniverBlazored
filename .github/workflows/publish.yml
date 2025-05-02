@@ -1,0 +1,38 @@
+name: Release to NuGet
+
+on:
+  push:
+    branches:
+      - master
+    
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore Dependencies
+      run: dotnet restore
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: icon
+        path: ./icon.png
+
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Pack nugets
+      run: dotnet pack --configuration Release --no-build --output ./nupkg
+
+    - name: Push to NuGet
+      run: dotnet nuget push ./nupkg/*.nupkg --api-key ${{ secrets.NUGET_APIKEY }} --source https://api.nuget.org/v3/index.json

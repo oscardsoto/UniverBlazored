@@ -5,11 +5,33 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <PackageId>UniverBlazored</PackageId>
+    <Version>1.0</Version>
+    <Authors>Oscar Soto</Authors>
+    <Description>Univer Blazored is a C# adaptation of the Univer framework, using its original CDN for integration into Blazor applications.</Description>
+    <PackageReleaseNotes>v1.0</PackageReleaseNotes>
+    <PackageProjectUrl>https://github.com/oscardsoto/UniverBlazored</PackageProjectUrl>
+
+    <EnablePackageValidation>true</EnablePackageValidation>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageTags>blazor, csharp, dotnet, univer, cdn, spreadsheet, document, slides, webapp, opensource, office, apache2, jsinterop, backend</PackageTags>
+
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
 
   <ItemGroup>
     <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="icon.png" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
   </ItemGroup>
 
   <ItemGroup>
