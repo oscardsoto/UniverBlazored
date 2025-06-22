@@ -1,16 +1,14 @@
 /**
  * Returns true if the script was loaded correctly
- * @param {any} link Link for the script tag
- * @param {any} isScript True to indicate script tag. False to indicate link tag
- * @returns (boolean)
+ * @param {any} links Links for the script/stylesheet tag
  */
-export function chargeScript(link, isScript) {
+export function chargeScript(links) {
 
     /**
      * Adds some scripts to document.head and waits until the last one is charged up
      * Code extracted from: https://stackoverflow.com/questions/18784920/how-to-add-dom-element-script-to-head-section
      */
-    var loadScript = function (src, isScript) {
+    var loadScript = function (src) {
         // Initialize scripts queue
         if (loadScript.scripts === undefined) {
             loadScript.scripts = [];
@@ -27,7 +25,7 @@ export function chargeScript(link, isScript) {
                 var item = loadScript.scripts[++loadScript.index];
                 var head = document.head;
                 var element = null
-                if (isScript) {
+                if (src.endsWith('js')) {
                     element         = document.createElement('script');
                     element.type    = 'text/javascript';
                     element.src     = item.src;
@@ -70,8 +68,6 @@ export function chargeScript(link, isScript) {
         return loadScript.scripts[loadScript.scripts.length - 1].promise;
     };
 
-    var charged = loadScript(link, isScript).then(function () {
-        return true
-    });
-    return charged
+    var promess = links.map(loadScript)
+    Promise.all(promess).then(() => console.log("Univer Scripts loaded!"))
 }

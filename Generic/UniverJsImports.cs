@@ -21,13 +21,12 @@ public class UniverJsImports : IAsyncDisposable
     /// <summary>
     /// Import the script for use in the page that has Univer's component
     /// </summary>
-    /// <param name="uri"></param>
-    /// <param name="isScript"></param>
+    /// <param name="uris">List of scripts that will be added to the "head" tag.</param>
     /// <returns></returns>
-    public async Task<bool> ImportLibrary(string uri, bool isScript)
+    public async Task ImportLibrary(params string[] uris)
     {
         var module = await moduleTask.Value;
-        return await module.InvokeAsync<bool>("chargeScript", uri, isScript);
+        await module.InvokeVoidAsync("chargeScript", uris);
     }
 
     /// <summary>

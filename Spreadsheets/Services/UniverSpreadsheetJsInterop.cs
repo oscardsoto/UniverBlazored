@@ -44,22 +44,16 @@ public class UniverSpreadsheetJsInterop : IUniverJsInterop
     /// </summary>
     /// <param name="newIdDiv">The new Id for the div to execute Univer</param>
     /// <returns></returns>
-    public async Task<bool> InitializeAsync(string newIdDiv)
+    public async Task InitializeAsync(string newIdDiv)
     {
         var imports = new UniverJsImports(runtime);
         var univers = GetUniverLinks();
-        foreach (var item in univers)
-        {
-            var ok = await imports.ImportLibrary(item, item.EndsWith("js"));
-            if (ok)
-                continue;
-        }
+        await imports.ImportLibrary(univers);
         await imports.DisposeAsync();
 
         var module = await moduleTask.Value;
         config.InitialConfig.SetNewIdDiv(newIdDiv);
         await module.InvokeVoidAsync("initUniver", config.InitialConfig);
-        return true;
     }
 
     /// <summary>

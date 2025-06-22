@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using UniverBlazored.Generic;
@@ -26,7 +27,8 @@ public partial class UniverSpreadsheetControl
     [Inject]
     protected IUniverSpreadsheetListener? Listeners { get; set; }
 
-    bool isRendered = false;
+    private bool isComplete = false;
+
     string id = "uXlsxComp";
 
     /// <summary>
@@ -43,7 +45,7 @@ public partial class UniverSpreadsheetControl
         
         set
         {
-            if (isRendered)
+            if (isComplete)
                 return;
             id = value;
         }
@@ -52,9 +54,14 @@ public partial class UniverSpreadsheetControl
     /// <summary>
     /// Css Classes for the component
     /// </summary>
-    /// <value></value>
     [Parameter]
     public string CssClass { get; set; } = "";
+
+    /// <summary>
+    /// Event when the component finishes to load scripts and listeners in the component
+    /// </summary>
+    [Parameter]
+    public Action<UniverSpreadsheetAgent, UniverUserManager> OnAfterComplete { get; set; } 
 
     /// <summary>
     /// Agent for the most common operations in Univer
@@ -76,11 +83,22 @@ public partial class UniverSpreadsheetControl
         if (firstRender)
         {
             await UniverInterop?.InitializeAsync(Id);
-            Listeners?.InitializeListenersAsync();
-            Agent       = new(UniverInterop);
+            await Listeners?.InitializeListenersAsync();
+            Agent = new(UniverInterop);
             UserManager = new(UniverInterop);
-            isRendered  = true;
+
+            // It needs to re-render, to correctly apply changes
             StateHasChanged();
+            return;
+        }
+
+        if (!firstRender && !isComplete)
+        {
+            isComplete = true;
+            OnAfterComplete?.Invoke(Agent, UserManager);
+            
+            // There's no need to re-render again here!
+            return;
         }
     }
 }

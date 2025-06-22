@@ -19,7 +19,7 @@ public class UniverSpreadsheetListener(IUniverJsInterop univerJS) : IUniverSprea
     /// <summary>
     /// Init the dictionary and the relation in the JSInterop
     /// </summary>
-    public async void InitializeListenersAsync()
+    public async Task InitializeListenersAsync()
     {
         Listeners = new();
         var reference = DotNetObjectReference.Create(this);
@@ -31,7 +31,7 @@ public class UniverSpreadsheetListener(IUniverJsInterop univerJS) : IUniverSprea
     /// </summary>
     /// <param name="data">Data to locate the listener in the workbook</param>
     /// <param name="_event">Triggers when the cell in the listener change its value</param>
-    public async void AddListenerAsync(UniverSpreadsheetListenerData data, Action<object> _event)
+    public async Task AddListenerAsync(UniverSpreadsheetListenerData data, Action<object> _event)
     {
         await univerJS.ResolveActionAsync("addListenerRange", data);
         Listeners.Add(data, _event);
@@ -41,7 +41,7 @@ public class UniverSpreadsheetListener(IUniverJsInterop univerJS) : IUniverSprea
     /// Removes the specified listener in the array
     /// </summary>
     /// <param name="data">Item to delete</param>
-    public async void RemoveListenerAsync(UniverSpreadsheetListenerData data)
+    public async Task RemoveListenerAsync(UniverSpreadsheetListenerData data)
     {
         await univerJS.ResolveActionAsync("removeListener", data);
         Listeners.Remove(data);

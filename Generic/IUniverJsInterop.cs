@@ -25,7 +25,7 @@ public interface IUniverJsInterop
     /// </summary>
     /// <param name="newIdDiv">The new Id for the div to execute Univer</param>
     /// <returns></returns>
-    Task<bool> InitializeAsync(string newIdDiv);
+    Task InitializeAsync(string newIdDiv);
 
     /// <summary>
     /// Sets an action for the FacadeAPI 
