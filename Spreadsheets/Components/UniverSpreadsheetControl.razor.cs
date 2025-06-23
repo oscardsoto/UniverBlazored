@@ -88,13 +88,14 @@ public partial class UniverSpreadsheetControl
             UserManager = new(UniverInterop);
 
             // It needs to re-render, to correctly apply changes
+            isComplete = true;
             StateHasChanged();
             return;
         }
 
-        if (!firstRender && !isComplete)
+        if (!firstRender && isComplete)
         {
-            isComplete = true;
+            isComplete = false;
             OnAfterComplete?.Invoke(Agent, UserManager);
             
             // There's no need to re-render again here!

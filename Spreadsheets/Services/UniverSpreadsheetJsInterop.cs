@@ -48,9 +48,15 @@ public class UniverSpreadsheetJsInterop : IUniverJsInterop
     {
         var imports = new UniverJsImports(runtime);
         var univers = GetUniverLinks();
-        await imports.ImportLibrary(univers);
+        foreach (var item in univers)
+        {
+            var ok = await imports.ImportLibrary(item);
+            if (ok)
+                continue;
+        }
+            
         await imports.DisposeAsync();
-
+        await Task.Delay(1000);         // 1 sec delay for waiting to all presets to charge
         var module = await moduleTask.Value;
         config.InitialConfig.SetNewIdDiv(newIdDiv);
         await module.InvokeVoidAsync("initUniver", config.InitialConfig);

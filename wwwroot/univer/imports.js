@@ -1,8 +1,8 @@
 /**
  * Returns true if the script was loaded correctly
- * @param {any} links Links for the script/stylesheet tag
+ * @param {any} link Link for the script/stylesheet tag
  */
-export function chargeScript(links) {
+export function chargeScript(link) {
 
     /**
      * Adds some scripts to document.head and waits until the last one is charged up
@@ -25,7 +25,7 @@ export function chargeScript(links) {
                 var item = loadScript.scripts[++loadScript.index];
                 var head = document.head;
                 var element = null
-                if (src.endsWith('js')) {
+                if (item.src.endsWith('js')) {
                     element         = document.createElement('script');
                     element.type    = 'text/javascript';
                     element.src     = item.src;
@@ -68,6 +68,8 @@ export function chargeScript(links) {
         return loadScript.scripts[loadScript.scripts.length - 1].promise;
     };
 
-    var promess = links.map(loadScript)
-    Promise.all(promess).then(() => console.log("Univer Scripts loaded!"))
+    var charged = loadScript(link).then(function () {
+        return true
+    });
+    return charged
 }

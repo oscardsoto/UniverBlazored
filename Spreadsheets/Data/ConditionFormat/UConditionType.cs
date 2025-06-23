@@ -32,7 +32,7 @@ public struct UConditionType
                 return;
             }
 
-            if (!ECFOperatorGropus.TimePeriodOperators.HasFlag(value))
+            if (ECFOperatorGropus.TimePeriodOperators.HasFlag(value))
             {
                 whenDate = value;
                 return;
