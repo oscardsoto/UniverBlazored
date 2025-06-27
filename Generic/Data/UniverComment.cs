@@ -77,10 +77,10 @@ public class UniverComment
     {
         if (dt == null)
         {
-            dT = DateTime.Now.ToString("dd/MM/yyyy HH:mm");
+            dT = DateTime.Now.ToString("yyyy/MM/dd HH:mm");
             return;
         }
 
-        dT = dt.Value.ToString("dd/MM/yyyy HH:mm");
+        dT = dt.Value.ToString("yyyy/MM/dd HH:mm");
     }
 }

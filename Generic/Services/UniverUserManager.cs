@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using UniverBlazored.Generic.Data;
 
 namespace UniverBlazored.Generic.Services;
@@ -43,11 +44,11 @@ public class UniverUserManager
     /// <param name="user">New user to add</param>
     /// <param name="setCurrent">True if this new user will be the current</param>
     /// <returns></returns>
-    public void AddUser(UniverUser user, bool setCurrent = false)
+    public async Task AddUser(UniverUser user, bool setCurrent = false)
     {
-        Add(user);
+        await Add(user);
         if (setCurrent)
-            SetCurrentUser(user);
+            await SetCurrentUser(user);
     }
 
     /// <summary>
@@ -55,29 +56,29 @@ public class UniverUserManager
     /// </summary>
     /// <param name="users">Users to add in the list</param>
     /// <returns></returns>
-    public void AddUser(params UniverUser[] users)
+    public async Task AddUser(params UniverUser[] users)
     {
         foreach(var user in users)
-            Add(user);
+            await Add(user);
     }
 
-    async void Add(UniverUser user) => await univerJS.SetAction("getUserService").SetAction("addUser", user).ResolveAsync();
+    async Task Add(UniverUser user) => await univerJS.SetAction("getUserService").SetAction("addUser", user).ResolveAsync();
 
     /// <summary>
     /// Clear the User List
     /// </summary>
     /// <returns></returns>
-    public async void CleanList() => await univerJS.SetAction("getUserService").SetAction("clear").ResolveAsync();
+    public async Task CleanList() => await univerJS.SetAction("getUserService").SetAction("clear").ResolveAsync();
 
     /// <summary>
     /// Deletes the selected user by id
     /// </summary>
     /// <param name="idUser">User Id in the list</param>
-    public async void DeleteUser(string idUser) => await univerJS.SetAction("getUserService").SetAction("delete", idUser).ResolveAsync();
+    public async Task DeleteUser(string idUser) => await univerJS.SetAction("getUserService").SetAction("delete", idUser).ResolveAsync();
 
     /// <summary>
     /// Sets the current user for the component
     /// </summary>
     /// <param name="user">User object in the list</param>
-    public async void SetCurrentUser(UniverUser user) => await univerJS.SetAction("getUserService").SetAction("setCurrentUser", user).ResolveAsync();
+    public async Task SetCurrentUser(UniverUser user) => await univerJS.SetAction("getUserService").SetAction("setCurrentUser", user).ResolveAsync();
 }

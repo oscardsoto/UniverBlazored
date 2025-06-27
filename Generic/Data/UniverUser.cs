@@ -13,7 +13,7 @@ public struct UniverUser
     /// <summary>
     /// User id
     /// </summary>
-    public string id { get; set; }
+    public string userID { get; set; }
 
     /// <summary>
     /// User's name
@@ -31,6 +31,18 @@ public struct UniverUser
     UniverUserType Type { get; set; }
 
     /// <summary>
+    /// Sets the user's id with the user type
+    /// </summary>
+    /// <param name="idValue">Id's value</param>
+    public void SetUserId(string idValue)
+    {
+        if (Type is UniverUserType.UNRECOGNIZED)
+            Type = UniverUserType.Owner;
+
+        userID = $"{Type}_{idValue}";
+    }
+
+    /// <summary>
     /// Get The user's type
     /// </summary>
     /// <returns></returns>
@@ -38,8 +50,8 @@ public struct UniverUser
     {
         string[] types = Enum.GetNames(typeof(UniverUserType));
         foreach (string type in types)
-            if (id.Contains(type))
-                return Enum.Parse<UniverUserType>(id.Split('_')[0]);
+            if (userID.Contains(type))
+                return Enum.Parse<UniverUserType>(userID.Split('_')[0]);
         return UniverUserType.UNRECOGNIZED;
     }
 
@@ -49,9 +61,14 @@ public struct UniverUser
     /// <param name="type">New type for the User ID</param>
     public void SetUserType(UniverUserType type)
     {
-        string idValue = id.Split('_')[1];
         Type = type;
-        id = $"{type}_{idValue}";
+        if (string.IsNullOrEmpty(userID))
+        {
+            userID = $"{type}_";
+        }
+
+        string idValue = userID.Split('_')[1];
+        userID = $"{type}_{idValue}";
     }
 }
 
