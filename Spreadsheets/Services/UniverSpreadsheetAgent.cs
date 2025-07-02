@@ -256,11 +256,94 @@ public class UniverSpreadsheetAgent
         
     }
 
+    class StyleReference
+    {
+        /// <summary>
+        /// style
+        /// </summary>
+        public UStyleData s { get; set; }
+
+        /// <summary>
+        /// positions
+        /// </summary>
+        public int[][] p { get; set; }
+
+        /// <summary>
+        /// Convert all positions to ranges
+        /// </summary>
+        /// <returns></returns>
+        public URange[] ToRanges()
+        {
+            var ranges = new List<URange>();
+            foreach (var pos in p)
+                ranges.Add(new(pos[0], pos[1]));
+            return ranges.ToArray();
+        }
+    }
+
     /// <summary>
     /// Return all styles used in the active range. Be careful with getting a lot of styles. It may cause a StackOverflowException!
     /// </summary>
     /// <returns></returns>
-    public async Task<UStyleData[][]> GetStyles() => await univerJS.ResolveActionAsync<UStyleData[][]>("getCellsStylesInfo");
+    public async Task<Dictionary<UStyleData, URange[]>> GetStyles()
+    {
+        var references = await univerJS.ResolveActionAsync<StyleReference[]>("getCellsStylesInfo");
+
+        // Each "p" contains [row, col]
+        var styleGroups = new Dictionary<UStyleData, URange[]>();
+
+        foreach (var reference in references)
+        {
+            // p = positions
+            var regions = reference.ToRanges();
+            var result  = new List<URange>();
+            var visited = new HashSet<URange>();
+            var grid    = new HashSet<URange>(regions);
+
+            foreach (var region in regions)
+            {
+                if (visited.Contains(region))
+                    continue;
+
+                int endCol = region.startColumn;
+                // Expand to the right
+                while (grid.Contains(new(region.startRow, endCol + 1)) && !visited.Contains(new(region.startRow, endCol + 1)))
+                    endCol++;
+
+                int endRow = region.startRow;
+                bool fullRowMatch;
+
+                // Expand downward while full row match
+                do
+                {
+                    endRow++;
+                    fullRowMatch = true;
+                    for (int col = region.startColumn; col <= endCol; col++)
+                    {
+                        if (!grid.Contains(new(endRow, col)) || visited.Contains(new(endRow, col)))
+                        {
+                            fullRowMatch = false;
+                            break;
+                        }
+                    }
+                }
+                while (fullRowMatch);
+
+                // Final endRow is the last matching one
+                endRow--;
+
+                // Mark all block as visited
+                for (int row = region.startRow; row <= endRow; row++)
+                    for (int col = region.startColumn; col <= endCol; col++)
+                        visited.Add(new(row, col));
+
+                result.Add(new(region.startRow, endRow, region.startColumn, endCol));
+            }
+            
+            styleGroups.Add(reference.s, result.ToArray());
+        }
+        return styleGroups;
+    }
 
     /// <summary>
     /// Sets a hyper link in the first cell on the active range

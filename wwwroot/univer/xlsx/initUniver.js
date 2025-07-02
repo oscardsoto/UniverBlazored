@@ -196,8 +196,9 @@ export function hasFilter(){
 }
 
 export function getCellsStylesInfo(){
-    var result = []
-    window.univerAPI.getActiveWorkbook().getActiveSheet().getActiveRange().getCellStyles().forEach(styleArray => {
+    var mapStyles = []
+    var activeRange = window.univerAPI.getActiveWorkbook().getActiveSheet().getActiveRange()
+    activeRange.getCellStyles().forEach(styleArray => {
         var arrayStyles = []
         styleArray.forEach(style => {
             if (!style){
@@ -213,9 +214,32 @@ export function getCellsStylesInfo(){
                 }
             }
         })
-        result.push(arrayStyles)
+        mapStyles.push(arrayStyles)
     })
-    return result
+
+    var dictionary = []
+    // {
+    //     "style"      s: null,
+    //     "positions"  p: []
+    // }
+    var { startRow, startColumn, endRow, endColumn } = activeRange.getRange();
+    for (var row = 0; row < mapStyles.length; row++){
+        for (var col = 0; col < mapStyles[row].length; col++){
+            if (!mapStyles[row][col])
+                continue;
+
+            var style = mapStyles[row][col]
+            var condt = kv => _.isEqual(kv.s, style)
+            if (dictionary.some(condt)){
+                var maped = dictionary.find(condt)
+                maped.p.push([startRow + row, startColumn + col])
+            }
+            else{
+                dictionary.push({s: style, p:[[startRow + row, startColumn + col]]})
+            }
+        }
+    }
+    return dictionary
 }
 
 export function getAllMerges(){

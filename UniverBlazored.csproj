@@ -7,7 +7,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
     <PackageId>UniverBlazored</PackageId>
-    <Version>1.0.3</Version>
+    <Version>1.1.0</Version>
     <Authors>Oscar Soto</Authors>
     <Description>Univer Blazored is a C# adaptation of the Univer framework, using its original CDN for integration into Blazor applications.</Description>
     <PackageReleaseNotes>Check all release notes at: https://github.com/oscardsoto/UniverBlazored/releases</PackageReleaseNotes>

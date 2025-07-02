@@ -35,7 +35,7 @@ public class UniverSpreadsheetJsInterop : IUniverJsInterop
     {
         this.runtime = runtime;
         config = options.Value;
-        moduleTask = new (() => runtime.InvokeAsync<IJSObjectReference>("import", "./_content/UniverBlazored/univer/xlsx/initUniver.min.js").AsTask());
+        moduleTask = new (() => runtime.InvokeAsync<IJSObjectReference>("import", "./_content/UniverBlazored/univer/xlsx/initUniver.min.js?v=1.1").AsTask());
         actionQueue = new();
     }
 
@@ -113,6 +113,7 @@ public class UniverSpreadsheetJsInterop : IUniverJsInterop
             "https://unpkg.com/react@18.3.1/umd/react.production.min.js",
             "https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js",
             "https://unpkg.com/rxjs/dist/bundles/rxjs.umd.min.js",
+            "https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js",
 
             $"https://unpkg.com/@univerjs/presets@{config.Version}/lib/umd/index.js",
             $"https://unpkg.com/@univerjs/preset-sheets-core@{config.Version}/lib/umd/index.js",
