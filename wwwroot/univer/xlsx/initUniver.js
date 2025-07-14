@@ -182,7 +182,10 @@ export function getSheetsInfo(){
             id: sheet.getSheetId(),
             name: sheet.getSheetName(),
             maxUsed: sheet.getDataRange().getRange(),
-            tabColor: sheet.getTabColor()
+            tabColor: sheet.getTabColor(),
+            isHidden: sheet.isSheetHidden(),
+            rowsHidden: sheet._worksheet.getRowManager().getHiddenRows(),
+            columnsHidden: sheet._worksheet.getColumnManager().getHiddenCols()
         })
     })
     return result
@@ -240,6 +243,87 @@ export function getCellsStylesInfo(){
         }
     }
     return dictionary
+}
+
+export function setRangeStyles(style, ranges)
+{
+    var activeSheet = window.univerAPI.getActiveWorkbook().getActiveSheet()
+    ranges.forEach((range) => {
+        var selectRange = activeSheet.getRange(range)
+        if (style.color !== null)
+            selectRange.setFontColor(style.color);
+
+        if (style.family !== null)
+            selectRange.setFontFamily(style.family);
+
+        if (style.strikethrough !== null)
+            selectRange.setFontLine(style.strikethrough ? "line-through" : "none");
+
+        if (style.underline !== null)
+            selectRange.setFontLine(style.underline ? "underline" : "none");
+
+        if (style.italic !== null)
+            selectRange.setFontStyle(style.italic ? "italic" : "normal");
+
+        if (style.size !== null)
+            selectRange.setFontSize(style.size);
+
+        if (style.bold !== null)
+            selectRange.setFontWeight(style.bold ? "bold" : "normal");
+
+        if (style.horizontalAlign !== null){
+            switch (style.horizontalAlign)
+            {
+                case 0:
+                    selectRange.setHorizontalAlignment("left");
+                    break;
+                case 1:
+                    selectRange.setHorizontalAlignment("center");
+                    break;
+                case 2:
+                    selectRange.setHorizontalAlignment("normal");
+                    break;
+            }
+        }
+            
+        if (style.verticalAlign !== null){
+            switch (style.verticalAlign)
+            {
+                case 0:
+                    selectRange.setVerticalAlignment("top");
+                    break;
+                case 1:
+                    selectRange.setVerticalAlignment("middle");
+                    break;
+                case 2:
+                    selectRange.setVerticalAlignment("bottom");
+                    break;
+            }
+        }
+
+        if (style.numberFormat !== null)
+            selectRange.setNumberFormat(style.numberFormat);
+
+        if (style.textRotation !== null)
+            selectRange.setTextRotation(style.textRotation);
+
+        if (style.backgroundColor !== null)
+            selectRange.setBackgroundColor(style.backgroundColor);
+
+        if (style.isWrap !== null && style.isWrap) {
+            selectRange.setWrap(style.isWrap);
+            if (style.wrapStrategy !== null)
+                selectRange.setWrapStrategy(style.wrapStrategy);
+        }
+    })
+}
+
+export function setRangeBorders(borders, ranges){
+    var activeSheet = window.univerAPI.getActiveWorkbook().getActiveSheet()
+    ranges.forEach((range) => {
+        var selectRange = activeSheet.getRange(range)
+        borders.forEach((border) => selectRange.setBorder(border.type, border.style, border.color))
+    })
 }
 
 export function getAllMerges(){

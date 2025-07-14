@@ -26,7 +26,14 @@ public class UniverSpreadsheetAgent
         this.univerJS = univerJS;
     }
 
-    void SetQueueToPosition() => univerJS.SetAction("getActiveWorkbook").SetAction("getActiveSheet").SetAction("getActiveRange");
+    void SetQueueToPosition(URange? rangeSelected = null)
+    {
+        univerJS.SetAction("getActiveWorkbook").SetAction("getActiveSheet");
+        if (rangeSelected == null)
+            univerJS.SetAction("getActiveRange");
+        else
+            univerJS.SetAction("getRange", rangeSelected);
+    }
 
     void SetQueueToPage() => univerJS.SetAction("getActiveWorkbook").SetAction("getActiveSheet");
 
@@ -60,7 +67,7 @@ public class UniverSpreadsheetAgent
     {
         var id = await univerJS.SetAction("getActiveWorkbook").SetAction("create", sheetName, rows, cols).SetAction("setTabColor", hexColorTab).SetAction("getSheetId").ResolveAsync<string>();
         await SetActiveSheet(id);
-        return new ()
+        return new()
         {
             id = id,
             name = sheetName,
@@ -88,7 +95,27 @@ public class UniverSpreadsheetAgent
     }
 
     /// <summary>
-    /// Set a value on a specific Row/Col
+    /// Hide the active sheet
+    /// </summary>
+    /// <returns></returns>
+    public async Task HideSheet()
+    {
+        SetQueueToPage();
+        await univerJS.SetAction("hideSheet").ResolveAsync();
+    }
+
+    /// <summary>
+    /// Unhide the active sheet
+    /// </summary>
+    /// <returns></returns>
+    public async Task ShowSheet()
+    {
+        SetQueueToPage();
+        await univerJS.SetAction("showSheet").ResolveAsync();
+    }
+
+    /// <summary>
+    /// Set a value on the active Row/Col
     /// </summary>
     /// <param name="value">The value to put on the cell</param>
     public async Task SetValue(object value)
@@ -98,19 +125,20 @@ public class UniverSpreadsheetAgent
     }
 
     /// <summary>
-    /// Gets the value in the specific Row/col. If not, return null
+    /// Gets the value in the specified Row/Col. If not, return null. CellSelected has to be null to consider the active range
     /// </summary>
+    /// <param name="cellSelected">Cell to get the value</param>
     /// <returns>The value from the cell</returns>
     public async Task<TValue> GetValue<TValue>()
     {
         SetQueueToPosition();
         var result = await univerJS.SetAction("getValue").ResolveAsync<object>();
-        JsonElement jsonValue = (JsonElement) result;
+        JsonElement jsonValue = (JsonElement)result;
         return jsonValue.Deserialize<TValue>() ?? default;
     }
 
     /// <summary>
-    /// Set values on a range 
+    /// Set values on the active range 
     /// </summary>
     /// <param name="values">Values of each row for the range. The size of each array must be the same number as the number of columns used</param>
     public async Task SetValue(params object[][] values)
@@ -126,7 +154,7 @@ public class UniverSpreadsheetAgent
     public async Task<object[][]> GetValues()
     {
         SetQueueToPosition();
-        return await univerJS.SetAction("getValues").ResolveAsync<object[][]>();
+        return await univerJS.SetAction("getRawValues").ResolveAsync<object[][]>();
     }
 
     /// <summary>
@@ -159,7 +187,7 @@ public class UniverSpreadsheetAgent
     {
         SetQueueToPosition();
         var result = await univerJS.SetAction("getFormula").ResolveAsync<object>();
-        JsonElement jsonRes = (JsonElement) result;
+        JsonElement jsonRes = (JsonElement)result;
         return jsonRes.Deserialize<string>() ?? default;
     }
 
@@ -229,7 +257,7 @@ public class UniverSpreadsheetAgent
 
         await univerJS.ResolveAsync();
     }
-    
+
     /// <summary>
     /// Set border to the range
     /// </summary>
@@ -240,7 +268,7 @@ public class UniverSpreadsheetAgent
     public async Task SetBorderStyle(EBorderType borderType, EBorderStyleType borderStyle, string color)
     {
         var enumValueType = borderType.ToString().ToLower();
-        var enumValueStyle = (int) borderStyle;
+        var enumValueStyle = (int)borderStyle;
         SetQueueToPosition();
         await univerJS.SetAction("setBorder", enumValueType, enumValueStyle, color).ResolveAsync();
     }
@@ -253,7 +281,38 @@ public class UniverSpreadsheetAgent
     {
         SetQueueToPosition();
         await univerJS.SetAction("useThemeStyle", "default").ResolveAsync();
-        
+    }
+
+    /// <summary>
+    /// Set to all ranges the same style asynchronously
+    /// </summary>
+    /// <param name="style">Font properties ti apply</param>
+    /// <param name="ranges">Ranges to set the style</param>
+    /// <returns></returns>
+    public async Task SetStylesAsync(UFontProperties style, params URange[] ranges)
+    {
+        await univerJS.ResolveActionAsync("setRangeStyles", style, ranges);
+    }
+
+    /// <summary>
+    /// Set to all ranges the same border style asynchronously
+    /// </summary>
+    /// <param name="bordersInfo">All info about the borders of each range</param>
+    /// <param name="ranges">Ranges to apply changes</param>
+    /// <returns></returns>
+    public async Task SetBordersAsync(List<(EBorderType type, EBorderStyleType style, string color)> bordersInfo, params URange[] ranges)
+    {
+        List<object> borders = new();
+        foreach (var border in bordersInfo)
+        {
+            borders.Add(new
+            {
+                type = border.type.ToString().ToLower(),
+                style = (int)border.style,
+                color = border.color,
+            });
+        }
+        await univerJS.ResolveActionAsync("setRangeBorders", borders, ranges);
     }
 
     class StyleReference
@@ -296,9 +355,9 @@ public class UniverSpreadsheetAgent
         {
             // p = positions
             var regions = reference.ToRanges();
-            var result  = new List<URange>();
+            var result = new List<URange>();
             var visited = new HashSet<URange>();
-            var grid    = new HashSet<URange>(regions);
+            var grid = new HashSet<URange>(regions);
 
             foreach (var region in regions)
             {
@@ -339,7 +398,7 @@ public class UniverSpreadsheetAgent
 
                 result.Add(new(region.startRow, endRow, region.startColumn, endCol));
             }
-            
+
             styleGroups.Add(reference.s, result.ToArray());
         }
         return styleGroups;
@@ -376,10 +435,11 @@ public class UniverSpreadsheetAgent
     {
         SetQueueToPosition();
         List<object> sort = [];
-        foreach(var s in sorts)
-            sort.Add(new{ 
-                column = s.column, 
-                ascending = s.ascending 
+        foreach (var s in sorts)
+            sort.Add(new
+            {
+                column = s.column,
+                ascending = s.ascending
             });
         await univerJS.SetAction("sort", sort.ToArray()).ResolveAsync();
     }
@@ -419,7 +479,6 @@ public class UniverSpreadsheetAgent
     {
         SetQueueToPosition();
         await univerJS.SetAction("breakApart").ResolveAsync();
-        
     }
 
     /// <summary>
@@ -493,7 +552,7 @@ public class UniverSpreadsheetAgent
         SetQueueToPage();
         SetConditionalFormatTypeToQueue(type);
         SetConditionalFormatStyleToQueue(style);
-        univerJS.SetAction("setRanges", new URange[]{ range }).SetAction("build");
+        univerJS.SetAction("setRanges", new URange[] { range }).SetAction("build");
 
         await univerJS.ResolveActionAsync("addConditionalFormat", univerJS.actionQueue.ToArray());
         univerJS.actionQueue.Clear();
@@ -803,20 +862,20 @@ public class UniverSpreadsheetAgent
     /// <returns></returns>
     public async Task<string> GetImageSource(string id)
     {
-        SetQueueToPage();
         int counterLength = 0;
-        int maxChunk = 29000;   // 29 KB, to keep the limit
+        int maxChunk = 20000;   // 20 KB, to keep the limit
         string source = "", chunk = "";
         do
         {
-            object val = await univerJS.SetAction("getImageById", id)
-                                    .SetAction("toBuilder")
-                                    .SetAction("getSource")
-                                    .SetAction("slice", counterLength,  counterLength + maxChunk)
-                                    .ResolveAsync<object>();
-            JsonElement jsonVal = (JsonElement) val;
-            chunk = (jsonVal.ValueKind is JsonValueKind.String) ? jsonVal.GetString() ?? "" : "";
-            counterLength += maxChunk + 1;
+            SetQueueToPage();
+            chunk = await univerJS.SetAction("getImageById", id)
+                                .SetAction("toBuilder")
+                                .SetAction("getSource")
+                                .SetAction("slice", counterLength, counterLength + maxChunk)
+                                .ResolveAsync<string>();
+            // JsonElement jsonVal = (JsonElement)val;
+            // chunk = (jsonVal.ValueKind is JsonValueKind.String) ? jsonVal.GetString() ?? "" : "";
+            counterLength += maxChunk;
             source += chunk;
         }
         while (!string.IsNullOrEmpty(chunk));
@@ -841,7 +900,7 @@ public class UniverSpreadsheetAgent
     /// </summary>
     /// <param name="comment">Comment to insert</param>
     /// <returns></returns>
-    public async Task InsertComment(UniverComment comment)=> await univerJS.ResolveActionAsync("insertComment", comment);
+    public async Task InsertComment(UniverComment comment) => await univerJS.ResolveActionAsync("insertComment", comment);
 
     /// <summary>
     /// Returns the first (root) comment at the first cell in the active  range
@@ -1026,5 +1085,53 @@ public class UniverSpreadsheetAgent
     {
         SetQueueToPage();
         await univerJS.SetAction("deleteRows", rowPos, rowCount).ResolveAsync();
+    }
+
+    /// <summary>
+    /// Hide an amount of rows in the active sheet
+    /// </summary>
+    /// <param name="rowPos">Row's position to count the rows to hide</param>
+    /// <param name="rowCount">Number of rows to hide from the position</param>
+    /// <returns></returns>
+    public async Task HideRows(int rowPos, int rowCount)
+    {
+        SetQueueToPage();
+        await univerJS.SetAction("hideRows", rowPos, rowCount).ResolveAsync();
+    }
+
+    /// <summary>
+    /// Hide an amount of columns in the active sheet
+    /// </summary>
+    /// <param name="colPos">Columns's position to count the columns to hide</param>
+    /// <param name="colCount">Number of columns to hide from the position</param>
+    /// <returns></returns>
+    public async Task HideColumns(int colPos, int colCount)
+    {
+        SetQueueToPage();
+        await univerJS.SetAction("hideColumns", colPos, colCount).ResolveAsync();
+    }
+
+    /// <summary>
+    /// Unhide an amount of rows in the active sheet
+    /// </summary>
+    /// <param name="rowPos">Row's position to count the rows to hide</param>
+    /// <param name="rowCount">Number of rows to hide from the position</param>
+    /// <returns></returns>
+    public async Task UnhideRows(int rowPos, int rowCount)
+    {
+        SetQueueToPage();
+        await univerJS.SetAction("showRows", rowPos, rowCount).ResolveAsync();
+    }
+
+    /// <summary>
+    /// Unhide an amount of columns in the active sheet
+    /// </summary>
+    /// <param name="colPos">Columns's position to count the columns to hide</param>
+    /// <param name="colCount">Number of columns to hide from the position</param>
+    /// <returns></returns>
+    public async Task UnhideColumns(int colPos, int colCount)
+    {
+        SetQueueToPage();
+        await univerJS.SetAction("showColumns", colPos, colCount).ResolveAsync();
     }
 }

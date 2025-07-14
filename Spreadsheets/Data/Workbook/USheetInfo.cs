@@ -25,6 +25,21 @@ namespace UniverBlazored.Spreadsheets.Data.Workbook
         public URange maxUsed { get; set; } = new();
 
         /// <summary>
+        /// True if the sheet is hidden
+        /// </summary>
+        public bool isHidden { get; set; } = false;
+
+        /// <summary>
+        /// List of rows (in range format) hidden in the sheet 
+        /// </summary>
+        public List<URange> rowsHidden { get; set; } = new();
+
+        /// <summary>
+        /// List of columns (in range format) hidden in the sheet 
+        /// </summary>
+        public List<URange> columnsHidden { get; set; } = new();
+
+        /// <summary>
         /// Max amount of rows used
         /// </summary>
         public string tabColor { get; set; } = "";
