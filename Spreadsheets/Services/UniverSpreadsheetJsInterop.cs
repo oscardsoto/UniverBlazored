@@ -90,6 +90,18 @@ public class UniverSpreadsheetJsInterop : IUniverJsInterop
     /// <summary>
     /// Resolve the queue
     /// </summary>
+    /// <returns></returns>
+    public async Task ResolveAsync(Queue<UniverQueueValue> actionQueue)
+    {
+        var module = await moduleTask.Value;
+        var result = await module.InvokeAsync<UniverResponse<bool>>("getAndExecuteMethod", actionQueue.ToArray(), false);
+        if (!result.res)
+            throw new UniverException($"Method in queue cannot be found in pointer.");
+    }
+
+    /// <summary>
+    /// Resolve the queue
+    /// </summary>
     /// <typeparam name="T">Type of value to be expected</typeparam>
     /// <returns></returns>
     public async Task<T> ResolveAsync<T>()
@@ -99,6 +111,20 @@ public class UniverSpreadsheetJsInterop : IUniverJsInterop
         if (result == null)
             throw new UniverException($"Method in queue cannot be found in pointer.");
         actionQueue.Clear();
+        return result.res;
+    }
+
+    /// <summary>
+    /// Resolve the queue
+    /// </summary>
+    /// <typeparam name="T">Type of value to be expected</typeparam>
+    /// <returns></returns>
+    public async Task<T> ResolveAsync<T>(Queue<UniverQueueValue> actionQueue)
+    {
+        var module = await moduleTask.Value;
+        var result = await module.InvokeAsync<UniverResponse<T>>("getAndExecuteMethod", actionQueue.ToArray(), true);
+        if (result == null)
+            throw new UniverException($"Method in queue cannot be found in pointer.");
         return result.res;
     }
 

@@ -49,6 +49,19 @@ public interface IUniverJsInterop
     Task<T> ResolveAsync<T>();
 
     /// <summary>
+    /// Resolve the queue
+    /// </summary>
+    /// <returns></returns>
+    Task ResolveAsync(Queue<UniverQueueValue> actionQueue);
+
+    /// <summary>
+    /// Resolve the queue
+    /// </summary>
+    /// <typeparam name="T">Type of value to be expected</typeparam>
+    /// <returns></returns>
+    Task<T> ResolveAsync<T>(Queue<UniverQueueValue> actionQueue);
+
+    /// <summary>
     /// Resolve a function in the javascript module
     /// </summary>
     /// <param name="name">Name of the function</param>

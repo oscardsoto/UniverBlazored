@@ -27,7 +27,5 @@ public struct URichTextValue
     /// Fragment of IDocumentBody, from Univer, to create and get all Rich Texts (See doc: https://github.com/dream-num/univer/blob/dev/packages/core/src/types/interfaces/i-document-data.ts#L121)
     /// </summary>
     /// <param name="richText">Text inside the rich text</param>
-    public URichTextValue(string richText) => dataStream = richText;
-
-    
+    public URichTextValue(string richText) => dataStream = richText;    
 }
