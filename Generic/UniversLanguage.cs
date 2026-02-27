@@ -29,6 +29,36 @@ public class UniversLanguage
     public static UniversLanguage SIMPLE_CHINESE => new UniversLanguage("zh-CN");
 
     /// <summary>
+    /// Vietnamese
+    /// </summary>
+    public static UniversLanguage VIETNAMESE => new UniversLanguage("vi-VN");
+
+    /// <summary>
+    /// Persian
+    /// </summary>
+    public static UniversLanguage FARSI => new UniversLanguage("fa-IR");
+
+    /// <summary>
+    /// Japanese
+    /// </summary>
+    public static UniversLanguage JAPANESE => new UniversLanguage("ja-JP");
+
+    /// <summary>
+    /// Korean
+    /// </summary>
+    public static UniversLanguage KOREAN => new UniversLanguage("ko-KR");
+
+    /// <summary>
+    /// Spanish
+    /// </summary>
+    public static UniversLanguage SPANISH_SPAIN => new UniversLanguage("es-ES");
+
+    /// <summary>
+    /// Catalan
+    /// </summary>
+    public static UniversLanguage CATALAN => new UniversLanguage("ca-ES");
+
+    /// <summary>
     /// Return the value from the language
     /// </summary>
     public override string ToString() => Value;
