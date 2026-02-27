@@ -172,6 +172,28 @@ function isPromise(value) {
     return value && (typeof value === 'object' || typeof value === 'function') && typeof value.then === 'function';
 }
 
+function selectSheet(snapshot){
+    var sheet = null
+    if (!snapshot.SheetSelected)
+        sheet = window.univerAPI.getActiveWorkbook().getActiveSheet()
+    else
+        sheet = window.univerAPI.getActiveWorkbook().getSheetBySheetId(snapshot.SheetSelected.id)
+
+    return sheet
+}
+
+function selectRange(snapshot){
+    var sheet = selectSheet(snapshot)
+
+    var range = null
+    if (!snapshot.RangeSelected)
+        range = sheet.getActiveRange()
+    else
+        range = sheet.getRange(snapshot.RangeSelected)
+
+    return range
+}
+
 /* 
     Additional functions 
 */
@@ -191,16 +213,18 @@ export function getSheetsInfo(){
     return result
 }
 
-export function hasFilter(){
-    var filter = window.univerAPI.getActiveWorkbook().getActiveSheet().getFilter()
+export function hasFilter(snapshot){
+    var range = selectRange(snapshot)
+    
+    var filter = range.getFilter()
     if (filter)
         return true
     return false
 }
 
-export function getCellsStylesInfo(){
+export function getCellsStylesInfo(snapshot){
     var mapStyles = []
-    var activeRange = window.univerAPI.getActiveWorkbook().getActiveSheet().getActiveRange()
+    var activeRange = selectRange(snapshot)
     activeRange.getCellStyles().forEach(styleArray => {
         var arrayStyles = []
         styleArray.forEach(style => {
@@ -245,9 +269,9 @@ export function getCellsStylesInfo(){
     return dictionary
 }
 
-export function setRangeStyles(style, ranges)
+export function setRangeStyles(snapshot, style, ranges)
 {
-    var activeSheet = window.univerAPI.getActiveWorkbook().getActiveSheet()
+    var activeSheet = selectSheet(snapshot)
     ranges.forEach((range) => {
         var selectRange = activeSheet.getRange(range)
         if (style.color !== null)
@@ -318,26 +342,25 @@ export function setRangeStyles(style, ranges)
     })
 }
 
-export function setRangeBorders(borders, ranges){
-    var activeSheet = window.univerAPI.getActiveWorkbook().getActiveSheet()
+export function setRangeBorders(snapshot, borders, ranges){
+    var activeSheet = selectSheet(snapshot)
     ranges.forEach((range) => {
         var selectRange = activeSheet.getRange(range)
         borders.forEach((border) => selectRange.setBorder(border.type, border.style, border.color))
     })
 }
 
-export function getAllMerges(){
+export function getAllMerges(snapshot){
+    var sheet = selectSheet(snapshot)
     var result = []
-    window.univerAPI.getActiveWorkbook().getActiveSheet().getMergedRanges().forEach(range => {
+    sheet.getMergedRanges().forEach(range => {
         result.push(range.getRange())
     })
     return result;
 }
 
-export function insertHyperLink(text, link){
-    const range = window.univerAPI.getActiveWorkbook()
-        .getActiveSheet()
-        .getActiveRange();
+export function insertHyperLink(snapshot, text, link){
+    const range = selectRange(snapshot)
     
     // Create hyperlink using newRichText().insertLink
     const richText = window.univerAPI.newRichText()
@@ -347,10 +370,8 @@ export function insertHyperLink(text, link){
     range.setRichTextValueForCell(richText);
 }
 
-export async function insertComment(comment){
-    const range = window.univerAPI.getActiveWorkbook()
-        .getActiveSheet()
-        .getActiveRange();
+export async function insertComment(snapshot, comment){
+    const range = selectRange(snapshot)
 
     const _comment = window.univerAPI.newTheadComment()
                                     .setContent(window.univerAPI.newRichText().insertText(comment.text.dataStream))
@@ -360,23 +381,23 @@ export async function insertComment(comment){
     await range.addCommentAsync(_comment)
 }
 
-export function getAllComments(){
-    const comments = window.univerAPI.getActiveWorkbook().getActiveSheet().getComments()
+export function getAllComments(snapshot){
+    const comments = selectSheet(snapshot).getComments()
     var result = []
     comments.forEach((comment) => { result.push(comment.getCommentData()) });
     return result;
 }
 
-export function getImagesId(){
-    const images = window.univerAPI.getActiveWorkbook().getActiveSheet().getImages()
+export function getImagesId(snapshot){
+    const images = selectSheet(snapshot).getImages()
     var result = []
     images.forEach((img) => { result.push(img.getId()) })
     return result
 }
 
-export async function getImageById(id, withSource){
+export async function getImageById(snapshot, id, withSource){
     var image = null
-    await window.univerAPI.getActiveWorkbook().getActiveSheet().getImageById(id).toBuilder().buildAsync().then(result => {
+    await selectSheet(snapshot).getImageById(id).toBuilder().buildAsync().then(result => {
         if (!withSource){
             result.source = ""
         }
@@ -385,11 +406,10 @@ export async function getImageById(id, withSource){
     return image
 }
 
-export function addConditionalFormat(queue)
+export function addConditionalFormat(snapshot, queue)
 {
     var rule = getAndExecuteMethod(queue, true)
-    console.log(rule.res)
-    window.univerAPI.getActiveWorkbook().getActiveSheet().addConditionalFormattingRule(rule.res)
+    selectSheet(snapshot).addConditionalFormattingRule(rule.res)
 }
 
 /* 

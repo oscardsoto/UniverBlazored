@@ -111,7 +111,7 @@ public class StyleCommands : USpreadsheetCommandBase<StyleCommands>
     /// <returns></returns>
     public async Task SetStylesAsync(UFontProperties style, params URange[] ranges)
     {
-        await UniverJS.ResolveActionAsync("setRangeStyles", style, ranges);
+        await UniverJS.ResolveActionAsync("setRangeStyles", this.Snapshot, style, ranges);
     }
 
     /// <summary>
@@ -132,7 +132,7 @@ public class StyleCommands : USpreadsheetCommandBase<StyleCommands>
                 color = border.color,
             });
         }
-        await UniverJS.ResolveActionAsync("setRangeBorders", borders, ranges);
+        await UniverJS.ResolveActionAsync("setRangeBorders", this.Snapshot, borders, ranges);
     }
 
     class StyleReference
@@ -166,7 +166,7 @@ public class StyleCommands : USpreadsheetCommandBase<StyleCommands>
     /// <returns></returns>
     public async Task<Dictionary<UStyleData, URange[]>> GetStyles()
     {
-        var references = await UniverJS.ResolveActionAsync<StyleReference[]>("getCellsStylesInfo");
+        var references = await UniverJS.ResolveActionAsync<StyleReference[]>("getCellsStylesInfo", this.Snapshot);
 
         // Each "p" contains [row, col]
         var styleGroups = new Dictionary<UStyleData, URange[]>();
@@ -232,7 +232,7 @@ public class StyleCommands : USpreadsheetCommandBase<StyleCommands>
     /// <returns></returns>
     public async Task SetHyperLink(string text, string link)
     {
-        await UniverJS.ResolveActionAsync("insertHyperLink", text, link);
+        await UniverJS.ResolveActionAsync("insertHyperLink", this.Snapshot, text, link);
     }
 
     /// <inheritdoc/>

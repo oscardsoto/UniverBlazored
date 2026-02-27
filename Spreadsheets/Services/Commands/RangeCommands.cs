@@ -93,7 +93,7 @@ public class RangeCommands : USpreadsheetCommandBase<RangeCommands>
     /// <returns>All ranges that correspond to each merge</returns>
     public async Task<URange[]> GetAllMerges()
     {
-        return await UniverJS.ResolveActionAsync<URange[]>("getAllMerges");
+        return await UniverJS.ResolveActionAsync<URange[]>("getAllMerges", this.Snapshot);
     }
 
     /// <summary>
@@ -123,7 +123,7 @@ public class RangeCommands : USpreadsheetCommandBase<RangeCommands>
     /// <returns></returns>
     public async Task<bool> HasFilter()
     {
-        return await UniverJS.ResolveActionAsync<bool>("hasFilter");
+        return await UniverJS.ResolveActionAsync<bool>("hasFilter", this.Snapshot);
     }
 
     /// <summary>

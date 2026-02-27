@@ -40,12 +40,12 @@ public class UniverSpreadsheetAgent
     /// <summary>
     /// All comment operations
     /// </summary>
-    public CommentCommands Comments { get; set; }
+    public CommentCommands Comments { get; private set; }
 
     /// <summary>
     /// All range operations
     /// </summary>
-    public RangeCommands Ranges { get; set; }
+    public RangeCommands Ranges { get; private set; }
 
     /// <summary>
     /// Univer's agent. Enables operations inside Blazor
@@ -85,7 +85,7 @@ public class UniverSpreadsheetAgent
 
     /// <summary>
     /// Return all sheets information
-    /// </summary>  
+    /// </summary>
     /// <returns></returns>
     public async Task<USheetInfo[]> GetSheetsInfo() => await univerJS.ResolveActionAsync<USheetInfo[]>("getSheetsInfo");
 
@@ -100,7 +100,7 @@ public class UniverSpreadsheetAgent
     public async Task<USheetInfo> AddNewSheet(string sheetName, int rows, int cols, string hexColorTab = null)
     {
         var queue = new UniverQueue(univerJS);
-        var id = await queue.SetAction("getActiveWorkbook").SetAction("create", sheetName, rows, cols).SetAction("setTabColor", hexColorTab).SetAction("getSheetId").ResolveQueueAsync<string>();
+        var id = await queue.SetAction("getActiveWorkbook").SetAction("create", sheetName, rows + 1, cols + 1).SetAction("setTabColor", hexColorTab).SetAction("getSheetId").ResolveQueueAsync<string>();
         await SetActiveSheet(id);
         return new()
         {

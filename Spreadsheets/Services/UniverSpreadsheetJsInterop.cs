@@ -35,7 +35,7 @@ public class UniverSpreadsheetJsInterop : IUniverJsInterop
     {
         this.runtime = runtime;
         config = options.Value;
-        moduleTask = new (() => runtime.InvokeAsync<IJSObjectReference>("import", "./_content/UniverBlazored/univer/xlsx/initUniver.min.js?v=1.1").AsTask());
+        moduleTask = new (() => runtime.InvokeAsync<IJSObjectReference>("import", "./_content/UniverBlazored/univer/xlsx/initUniver.min.js?v=1.2").AsTask());
         actionQueue = new();
     }
 

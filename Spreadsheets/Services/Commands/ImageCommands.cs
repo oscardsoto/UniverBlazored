@@ -74,14 +74,14 @@ public class ImageCommands : USpreadsheetCommandBase<ImageCommands>
     /// Return all images ids in the active sheet
     /// </summary>
     /// <returns></returns>
-    public async Task<string[]> GetImagesId() => await UniverJS.ResolveActionAsync<string[]>("getImagesId");
+    public async Task<string[]> GetImagesId() => await UniverJS.ResolveActionAsync<string[]>("getImagesId", this.Snapshot);
 
     /// <summary>
     /// Return the image by id on the active page (Use this if the image is less than 33KB, otherwise will fail in Exception.)
     /// </summary>
     /// <param name="id">Image Id</param>
     /// <param name="withSource">False if you dont want to get the image source (if the image is more than 33KB)</param>
-    public async Task<UImage> GetImage(string id, bool withSource = true) => await UniverJS.ResolveActionAsync<UImage>("getImageById", id, withSource);
+    public async Task<UImage> GetImage(string id, bool withSource = true) => await UniverJS.ResolveActionAsync<UImage>("getImageById", this.Snapshot, id, withSource);
 
     /// <summary>
     /// Return the data Uri of the image in the active sheet

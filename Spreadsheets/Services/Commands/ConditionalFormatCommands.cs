@@ -35,7 +35,7 @@ public class ConditionalFormatCommands : USpreadsheetCommandBase<ConditionalForm
         SetConditionalFormatStyleToQueue(queue, style);
         queue.SetAction("setRanges", new URange[] { range }).SetAction("build");
 
-        await UniverJS.ResolveActionAsync("addConditionalFormat", queue.ToArray());
+        await UniverJS.ResolveActionAsync("addConditionalFormat", Snapshot, queue.ToArray());
     }
 
     /// <summary>

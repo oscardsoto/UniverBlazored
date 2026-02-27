@@ -22,7 +22,7 @@ public class CommentCommands : USpreadsheetCommandBase<CommentCommands>
     /// </summary>
     /// <param name="comment">Comment to insert</param>
     /// <returns></returns>
-    public async Task InsertComment(UniverComment comment) => await UniverJS.ResolveActionAsync("insertComment", comment);
+    public async Task InsertComment(UniverComment comment) => await UniverJS.ResolveActionAsync("insertComment", Snapshot, comment);
 
     /// <summary>
     /// Returns the first (root) comment at the first cell in the active  range
@@ -46,7 +46,7 @@ public class CommentCommands : USpreadsheetCommandBase<CommentCommands>
     /// Return all comments in the sheet
     /// </summary>
     /// <returns></returns>
-    public async Task<UniverComment[]> GetComments() => await UniverJS.ResolveActionAsync<UniverComment[]>("getAllComments");
+    public async Task<UniverComment[]> GetComments() => await UniverJS.ResolveActionAsync<UniverComment[]>("getAllComments", Snapshot);
 
     /// <summary>
     /// Delete all comments in the page
