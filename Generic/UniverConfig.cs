@@ -5,10 +5,28 @@ namespace UniverBlazored.Generic;
 /// </summary>
 public class UniverConfig
 {
+    private Version versionLimit = new Version("0.15.1");
+
+    private string _version = "";
+
     /// <summary>
     /// Univer's version
     /// </summary>
-    public string Version { get; set; } = "0.5.5";
+    public string Version
+    {
+        get
+        {
+            return _version;
+        }
+        set
+        {
+            var versionInput = new Version(value);
+            if (versionInput < versionLimit)
+                throw new ArgumentException($"Version must be greater than or equal to {versionLimit}. Your version: {value}");
+
+            _version = value;
+        }
+    }
 
     /// <summary>
     /// Univer's language

@@ -1,5 +1,6 @@
 using UniverBlazored.Generic;
 using UniverBlazored.Generic.Data;
+using UniverBlazored.Spreadsheets.Data.Styles;
 using UniverBlazored.Spreadsheets.Data.Workbook;
 using UniverBlazored.Spreadsheets.Services.Commands;
 
@@ -61,6 +62,17 @@ public class UniverSpreadsheetAgent
         RowColumns          = new(new USpreadsheetSnapshot(), univerJS);
         Comments            = new(new USpreadsheetSnapshot(), univerJS);
         Ranges              = new(new USpreadsheetSnapshot(), univerJS);
+    }
+
+    /// <summary>
+    /// Toggles dark mode in the component.
+    /// </summary>
+    /// <param name="darkMode"> If is true, it will be enabled. If false, it will be disabled.</param>
+    /// <returns></returns>
+    public async Task ToggleDarkMode(bool darkMode)
+    {
+        var queue = new UniverQueue(univerJS);
+        await queue.SetAction("toggleDarkMode", darkMode).ResolveQueueAsync();
     }
 
     /// <summary>
@@ -155,5 +167,16 @@ public class UniverSpreadsheetAgent
                                  .SetAction("getId").ResolveQueueAsync<string>();
 
         await queue.SetAction("getActiveWorkbook").SetAction("getSheetBySheetId", idSheet).SetAction("showSheet").ResolveQueueAsync();
+    }
+
+    /// <summary>
+    /// Add a new list of installed fonts
+    /// </summary>
+    /// <param name="fonts">Fonts info</param>
+    /// <returns></returns>
+    public async Task AddNewFonts(params UniverFont[] fonts)
+    {
+        var queue = new UniverQueue(univerJS);
+        await queue.SetAction("addFonts", [fonts]).ResolveQueueAsync();
     }
 }

@@ -1,8 +1,9 @@
 /**
  * Initialize Univer from server's configuration
  * @param {*} config Configuration object to initialize the component
+ * @param {*} language Language to initialize the component
  */
-export function initUniver(config){
+export function initUniver(config, language) {
     
     /**
      * config attributes:
@@ -19,30 +20,18 @@ export function initUniver(config){
      * watermarkLabel: String
      * 
      * newSheetName: String
-     * idDiv. string
+     * idDiv: string
+     * fontsConfig: UniverFontsConfig
      */
 
     const { createUniver } = UniverPresets;
     const { LocaleType, merge } = UniverCore;
     const { defaultTheme } = UniverDesign;
+    const languageConfig = getLanguageConfig(config, language, LocaleType, merge);
 
     const { univerAPI } = createUniver({
-        locale: LocaleType.EN_US,
-        locales: {
-            [LocaleType.EN_US]: merge(
-                {},
-                UniverPresetSheetsCoreEnUS,
-                config.hasShort ? UniverPresetSheetsSortEnUS : null,
-                config.hasDataValidation ? UniverPresetSheetsDataValidationEnUS : null,
-                config.hasFilter ? UniverPresetSheetsFilterEnUS : null,
-                config.hasConditionalFormatting ? UniverPresetSheetsConditionalFormattingEnUS : null,
-                config.hasHyperLink ? UniverPresetSheetsHyperLinkEnUS : null,
-                config.hasThreadComment ? UniverPresetSheetsThreadCommentEnUS : null,
-                config.hasDrawing ? UniverPresetSheetsDrawingEnUS : null,
-                null, // UniverSheetsCrosshairHighlightEnUS,
-                null // UniverWatermarkEnUS
-            ),
-        },
+        locale: languageConfig.locale,
+        locales: languageConfig.locales,
         theme: defaultTheme,
         presets: getPresets(config),
         plugins: getPlugins(config)
@@ -70,10 +59,76 @@ export function initUniver(config){
     })
 }
 
+function getLanguageConfig(config, language, LocaleType, merge){
+    const localeType = getLocaleType(language, LocaleType);
+    return {
+        locale: localeType,
+        locales: {
+            [localeType]: getLocaleResources(config, localeType, merge)
+        }
+    }
+}
+
+function getLocaleType(language, LocaleType){
+    switch (language.value){
+        case "ru-RU": return LocaleType.RU_RU;
+        case "zh-CN": return LocaleType.ZH_CN;
+        case "vi-VN": return LocaleType.VI_VN;
+        case "fa-IR": return LocaleType.FA_IR;
+        case "ja-JP": return LocaleType.JA_JP;
+        case "ko-KR": return LocaleType.KO_KR;
+        case "es-ES": return LocaleType.ES_ES;
+        case "ca-ES": return LocaleType.CA_ES;
+        case "en-US":
+        default:
+            return LocaleType.EN_US;
+    }
+}
+
+function getLocaleResources(config, localeType, merge){
+    const suffix = getLocaleSuffix(localeType, UniverCore.LocaleType);
+    return merge(
+        {},
+        getLocaleGlobalValue(`UniverPresetSheetsCore${suffix}`),
+        config.hasShort ? getLocaleGlobalValue(`UniverPresetSheetsSort${suffix}`) : null,
+        config.hasDataValidation ? getLocaleGlobalValue(`UniverPresetSheetsDataValidation${suffix}`) : null,
+        config.hasFilter ? getLocaleGlobalValue(`UniverPresetSheetsFilter${suffix}`) : null,
+        config.hasConditionalFormatting ? getLocaleGlobalValue(`UniverPresetSheetsConditionalFormatting${suffix}`) : null,
+        config.hasHyperLink ? getLocaleGlobalValue(`UniverPresetSheetsHyperLink${suffix}`) : null,
+        config.hasThreadComment ? getLocaleGlobalValue(`UniverPresetSheetsThreadComment${suffix}`) : null,
+        config.hasDrawing ? getLocaleGlobalValue(`UniverPresetSheetsDrawing${suffix}`) : null,
+        null,
+        null
+    )
+}
+
+function getLocaleSuffix(localeType, LocaleType){
+    switch (localeType){
+        case LocaleType.RU_RU: return "RuRU"
+        case LocaleType.ZH_CN: return "ZhCN"
+        case LocaleType.VI_VN: return "ViVN"
+        case LocaleType.FA_IR: return "FaIR"
+        case LocaleType.JA_JP: return "JaJP"
+        case LocaleType.KO_KR: return "KoKR"
+        case LocaleType.ES_ES: return "EsES"
+        case LocaleType.CA_ES: return "CaES"
+        case LocaleType.EN_US:
+        default:
+            return "EnUS"
+    }
+}
+
+function getLocaleGlobalValue(localeKey){
+    return globalThis[localeKey]
+}
+
 function getPresets(config){
     var presets = []
     const { UniverSheetsCorePreset } = UniverPresetSheetsCore
-    presets.push(UniverSheetsCorePreset({ container: config.idDiv }))
+    presets.push(UniverSheetsCorePreset({
+        container: config.idDiv,
+        customFontFamily: config.fontsConfig
+    }))
 
     if (config.hasShort){
         const { UniverSheetsSortPreset } = UniverPresetSheetsSort

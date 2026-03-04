@@ -66,6 +66,12 @@ public struct UniverInit
     public string idDiv { get; set; } = "uXlsxComp";
 
     /// <summary>
+    /// Configuration for fonts
+    /// </summary>
+    /// <returns></returns>
+    public UniverFontsConfig fontsConfig { get; set; } = new();
+
+    /// <summary>
     /// Config object for UniverJS
     /// </summary>
     public UniverInit() { }

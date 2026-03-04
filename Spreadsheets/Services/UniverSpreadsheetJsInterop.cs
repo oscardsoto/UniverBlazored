@@ -35,7 +35,7 @@ public class UniverSpreadsheetJsInterop : IUniverJsInterop
     {
         this.runtime = runtime;
         config = options.Value;
-        moduleTask = new (() => runtime.InvokeAsync<IJSObjectReference>("import", "./_content/UniverBlazored/univer/xlsx/initUniver.min.js?v=1.2").AsTask());
+        moduleTask = new (() => runtime.InvokeAsync<IJSObjectReference>("import", "./_content/UniverBlazored/univer/xlsx/initUniver.min.js?v=1.4").AsTask());
         actionQueue = new();
     }
 
@@ -59,7 +59,7 @@ public class UniverSpreadsheetJsInterop : IUniverJsInterop
         await Task.Delay(1000);         // 1 sec delay for waiting to all presets to charge
         var module = await moduleTask.Value;
         config.InitialConfig.SetNewIdDiv(newIdDiv);
-        await module.InvokeVoidAsync("initUniver", config.InitialConfig);
+        await module.InvokeVoidAsync("initUniver", config.InitialConfig, config.Language);
     }
 
     /// <summary>
