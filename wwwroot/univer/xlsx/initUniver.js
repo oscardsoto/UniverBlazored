@@ -486,3 +486,70 @@ export function removeListener(listener) {
         window.listenerNET.listeners.splice(index, 1)
     }
 }
+
+function getWorksheetPermission(snapshot){
+    return selectSheet(snapshot).getWorksheetPermission()
+}
+
+function rangesEqual(first, second){
+    return first.startRow === second.startRow
+        && first.endRow === second.endRow
+        && first.startColumn === second.startColumn
+        && first.endColumn === second.endColumn
+}
+
+export async function protectRangesInSheet(snapshot, configs){
+    const sheet = selectSheet(snapshot)
+    const permission = getWorksheetPermission(snapshot)
+
+    const payload = (configs ?? []).map(cfg => ({
+        ranges: (cfg.ranges ?? []).map(range => sheet.getRange(range)),
+        options: cfg.options ?? undefined
+    }))
+
+    await permission.protectRanges(payload)
+}
+
+export async function getProtectedRangesInSheet(snapshot){
+    const rules = await getWorksheetPermission(snapshot).listRangeProtectionRules()
+    return rules.map(rule => ({
+        ruleId: rule.id,
+        ranges: rule.ranges.map(range => range.getRange()),
+        options: rule.options
+    }))
+}
+
+export async function unprotectRuleIdsInSheet(snapshot, ruleIds){
+    await getWorksheetPermission(snapshot).unprotectRules(ruleIds ?? [])
+}
+
+export async function isActiveRangeLocked(snapshot){
+    const selected = selectRange(snapshot).getRange()
+    const rules = await getWorksheetPermission(snapshot).listRangeProtectionRules()
+
+    return rules.some(rule => rule.ranges.some(range => rangesEqual(range.getRange(), selected)))
+}
+
+export async function setActiveRangeLock(snapshot, isLocked, options){
+    const selected = selectRange(snapshot).getRange()
+    const sheet = selectSheet(snapshot)
+    const permission = getWorksheetPermission(snapshot)
+
+    if (isLocked){
+        await permission.protectRanges([{
+            ranges: [sheet.getRange(selected)],
+            options: options ?? { allowEdit: false }
+        }])
+        return
+    }
+
+    const rules = await permission.listRangeProtectionRules()
+    const toDelete = []
+    rules.forEach(rule => {
+        if (rule.ranges.some(range => rangesEqual(range.getRange(), selected)))
+            toDelete.push(rule.id)
+    })
+
+    if (toDelete.length > 0)
+        await permission.unprotectRules(toDelete)
+}

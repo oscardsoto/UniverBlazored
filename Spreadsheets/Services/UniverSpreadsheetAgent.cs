@@ -48,6 +48,12 @@ public class UniverSpreadsheetAgent
     /// </summary>
     public RangeCommands Ranges { get; private set; }
 
+
+    /// <summary>
+    /// All accessibility operations
+    /// </summary>
+    public AccessibilityCommands Accessibility { get; private set; }
+
     /// <summary>
     /// Univer's agent. Enables operations inside Blazor
     /// </summary>
@@ -62,6 +68,7 @@ public class UniverSpreadsheetAgent
         RowColumns          = new(new USpreadsheetSnapshot(), univerJS);
         Comments            = new(new USpreadsheetSnapshot(), univerJS);
         Ranges              = new(new USpreadsheetSnapshot(), univerJS);
+        Accessibility       = new(new USpreadsheetSnapshot(), univerJS);
     }
 
     /// <summary>
