@@ -19,6 +19,12 @@ public struct UniverFontsConfig
     [JsonPropertyName("override")]
     public bool Override { get; set; } = false;
 
+    public UniverFontsConfig()
+    {
+        list = new();
+        Override = false;
+    }
+
     /// <summary>
     /// Univer configuration object for fonts
     /// </summary>
