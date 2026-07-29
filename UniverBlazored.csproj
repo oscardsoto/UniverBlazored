@@ -27,6 +27,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="UniverBlazored.Tests\**\*.cs" />
+    <Content Remove="UniverBlazored.Tests\**\*" />
+    <EmbeddedResource Remove="UniverBlazored.Tests\**\*" />
+    <None Remove="UniverBlazored.Tests\**\*" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="icon.png" Pack="true" PackagePath="" />
   </ItemGroup>
 
@@ -36,6 +43,12 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.10" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>UniverBlazored.Tests</_Parameter1>
+    </AssemblyAttribute>
   </ItemGroup>
 
 </Project>

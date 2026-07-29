@@ -24,7 +24,7 @@ public class RowColumnsCommands : USpreadsheetCommandBase<RowColumnsCommands>
     /// <returns></returns>
     public async Task SetFreeze(int rows, int cols)
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseSheet(queue);
         await queue.SetAction("setFrozenRows", rows).SetAction("setFrozenColumns", cols).ResolveQueueAsync();
     }
@@ -35,7 +35,7 @@ public class RowColumnsCommands : USpreadsheetCommandBase<RowColumnsCommands>
     /// <returns></returns>
     public async Task CancelFreeze()
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseSheet(queue);
         await queue.SetAction("cancelFreeze").ResolveQueueAsync();
     }
@@ -46,7 +46,7 @@ public class RowColumnsCommands : USpreadsheetCommandBase<RowColumnsCommands>
     /// <returns>Frozen state object</returns>
     public async Task<UFreeze> GetFreeze()
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseSheet(queue);
         return await queue.SetAction("getFreeze").ResolveQueueAsync<UFreeze>();
     }
@@ -56,38 +56,34 @@ public class RowColumnsCommands : USpreadsheetCommandBase<RowColumnsCommands>
     //      ColumnWidth -> Univer/88 (px), ClosedXML/8.43 (NoC)
     // We gotta use "Rule of 3" in order to convert the points
 
-    /// <summary>
-    /// Return an array of all heights of each row index indicated
-    /// </summary>
-    /// <param name="rowPos">Rows positions</param>
-    /// <returns></returns>
     public async Task<double[]> GetRowsHeights(params int[] rowPos)
     {
-        var queue = new UniverQueue(UniverJS);
-        var results = new List<double>();
-        foreach (int pos in rowPos)
+        return await ExecuteAtomically(async inner =>
         {
-            UseSheet(queue);
-            results.Add(await queue.SetAction("getRowHeight", pos).ResolveQueueAsync<double>());
-        }
-        return results.ToArray();
+            var results = new List<double>();
+            foreach (int pos in rowPos)
+            {
+                var q = new UniverQueue(inner, Snapshot.ToContext());
+                UseSheet(q);
+                results.Add(await q.SetAction("getRowHeight", pos).ResolveQueueAsync<double>());
+            }
+            return results.ToArray();
+        });
     }
 
-    /// <summary>
-    /// Return an array of widths of each column index indicated
-    /// </summary>
-    /// <param name="colPos">Columns positions</param>
-    /// <returns></returns>
     public async Task<double[]> GetColumnWidth(params int[] colPos)
     {
-        var queue = new UniverQueue(UniverJS);
-        var results = new List<double>();
-        foreach (int pos in colPos)
+        return await ExecuteAtomically(async inner =>
         {
-            UseSheet(queue);
-            results.Add(await queue.SetAction("getColumnWidth", pos).ResolveQueueAsync<double>());
-        }
-        return results.ToArray();
+            var results = new List<double>();
+            foreach (int pos in colPos)
+            {
+                var q = new UniverQueue(inner, Snapshot.ToContext());
+                UseSheet(q);
+                results.Add(await q.SetAction("getColumnWidth", pos).ResolveQueueAsync<double>());
+            }
+            return results.ToArray();
+        });
     }
 
     /// <summary>
@@ -98,7 +94,7 @@ public class RowColumnsCommands : USpreadsheetCommandBase<RowColumnsCommands>
     /// <returns></returns>
     public async Task SetColumnWidth(int colPos, double width)
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseSheet(queue);
         await queue.SetAction("setColumnWidth", colPos, width).ResolveQueueAsync();
     }
@@ -111,7 +107,7 @@ public class RowColumnsCommands : USpreadsheetCommandBase<RowColumnsCommands>
     /// <returns></returns>
     public async Task SetRowHeight(int rowPos, double height)
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseSheet(queue);
         await queue.SetAction("setRowHeight", rowPos, height).ResolveQueueAsync();
     }
@@ -124,7 +120,7 @@ public class RowColumnsCommands : USpreadsheetCommandBase<RowColumnsCommands>
     /// <returns></returns>
     public async Task InsertColumns(int colPos, int colCount = 1)
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseSheet(queue);
         await queue.SetAction("insertColumns", colPos, colCount).ResolveQueueAsync();
     }
@@ -137,7 +133,7 @@ public class RowColumnsCommands : USpreadsheetCommandBase<RowColumnsCommands>
     /// <returns></returns>
     public async Task DeleteColumns(int colPos, int colCount = 1)
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseSheet(queue);
         await queue.SetAction("deleteColumns", colPos, colCount).ResolveQueueAsync();
     }
@@ -150,7 +146,7 @@ public class RowColumnsCommands : USpreadsheetCommandBase<RowColumnsCommands>
     /// <returns></returns>
     public async Task InsertRows(int rowPos, int rowCount = 1)
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseSheet(queue);
         await queue.SetAction("insertRows", rowPos, rowCount).ResolveQueueAsync();
     }
@@ -163,7 +159,7 @@ public class RowColumnsCommands : USpreadsheetCommandBase<RowColumnsCommands>
     /// <returns></returns>
     public async Task DeleteRows(int rowPos, int rowCount = 1)
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseSheet(queue);
         await queue.SetAction("deleteRows", rowPos, rowCount).ResolveQueueAsync();
     }
@@ -176,7 +172,7 @@ public class RowColumnsCommands : USpreadsheetCommandBase<RowColumnsCommands>
     /// <returns></returns>
     public async Task HideRows(int rowPos, int rowCount)
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseSheet(queue);
         await queue.SetAction("hideRows", rowPos, rowCount).ResolveQueueAsync();
     }
@@ -189,7 +185,7 @@ public class RowColumnsCommands : USpreadsheetCommandBase<RowColumnsCommands>
     /// <returns></returns>
     public async Task HideColumns(int colPos, int colCount)
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseSheet(queue);
         await queue.SetAction("hideColumns", colPos, colCount).ResolveQueueAsync();
     }
@@ -202,7 +198,7 @@ public class RowColumnsCommands : USpreadsheetCommandBase<RowColumnsCommands>
     /// <returns></returns>
     public async Task UnhideRows(int rowPos, int rowCount)
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseSheet(queue);
         await queue.SetAction("showRows", rowPos, rowCount).ResolveQueueAsync();
     }
@@ -215,7 +211,7 @@ public class RowColumnsCommands : USpreadsheetCommandBase<RowColumnsCommands>
     /// <returns></returns>
     public async Task UnhideColumns(int colPos, int colCount)
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseSheet(queue);
         await queue.SetAction("showColumns", colPos, colCount).ResolveQueueAsync();
     }

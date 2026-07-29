@@ -21,7 +21,7 @@ public class AccessibilityCommands : USpreadsheetCommandBase<AccessibilityComman
     /// </summary>
     public async Task SetWorkbookMode(EWorkbookMode mode)
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         await queue.SetAction("getActiveWorkbook")
                    .SetAction("getWorkbookPermission")
                    .SetAction("setMode", mode.ToUniverMode())
@@ -61,7 +61,7 @@ public class AccessibilityCommands : USpreadsheetCommandBase<AccessibilityComman
     /// </summary>
     public async Task<bool> CanEditWorkbook()
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         return await queue.SetAction("getActiveWorkbook")
                           .SetAction("getWorkbookPermission")
                           .SetAction("canEdit")
@@ -73,7 +73,7 @@ public class AccessibilityCommands : USpreadsheetCommandBase<AccessibilityComman
     /// </summary>
     public async Task SetWorkbookPermission(EWorkbookPermissionPoint point, bool value)
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         await queue.SetAction("getActiveWorkbook")
                    .SetAction("getWorkbookPermission")
                    .SetAction("setPoint", point.ToUniverPoint(), value)
@@ -85,7 +85,7 @@ public class AccessibilityCommands : USpreadsheetCommandBase<AccessibilityComman
     /// </summary>
     public async Task<bool> GetWorkbookPermission(EWorkbookPermissionPoint point)
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         return await queue.SetAction("getActiveWorkbook")
                           .SetAction("getWorkbookPermission")
                           .SetAction("getPoint", point.ToUniverPoint())
@@ -97,7 +97,7 @@ public class AccessibilityCommands : USpreadsheetCommandBase<AccessibilityComman
     /// </summary>
     public async Task<Dictionary<string, bool>> GetWorkbookPermissions()
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         return await queue.SetAction("getActiveWorkbook")
                           .SetAction("getWorkbookPermission")
                           .SetAction("getSnapshot")
@@ -109,7 +109,7 @@ public class AccessibilityCommands : USpreadsheetCommandBase<AccessibilityComman
     /// </summary>
     public async Task SetWorksheetMode(EWorksheetMode mode)
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseSheet(queue);
         await queue.SetAction("getWorksheetPermission")
                    .SetAction("setMode", mode.ToUniverMode())
@@ -131,7 +131,7 @@ public class AccessibilityCommands : USpreadsheetCommandBase<AccessibilityComman
     /// </summary>
     public async Task<bool> CanEditWorksheet()
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseSheet(queue);
         return await queue.SetAction("getWorksheetPermission")
                           .SetAction("canEdit")
@@ -143,7 +143,7 @@ public class AccessibilityCommands : USpreadsheetCommandBase<AccessibilityComman
     /// </summary>
     public async Task<bool> CanEditCell(int row, int col)
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseSheet(queue);
         return await queue.SetAction("getWorksheetPermission")
                           .SetAction("canEditCell", row, col)
@@ -155,7 +155,7 @@ public class AccessibilityCommands : USpreadsheetCommandBase<AccessibilityComman
     /// </summary>
     public async Task<bool> CanViewCell(int row, int col)
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseSheet(queue);
         return await queue.SetAction("getWorksheetPermission")
                           .SetAction("canViewCell", row, col)
@@ -167,7 +167,7 @@ public class AccessibilityCommands : USpreadsheetCommandBase<AccessibilityComman
     /// </summary>
     public async Task ApplyWorksheetConfig(UWorksheetPermissionConfig config)
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseSheet(queue);
         await queue.SetAction("getWorksheetPermission")
                    .SetAction("applyConfig", config.ToUniverConfig())
@@ -179,7 +179,7 @@ public class AccessibilityCommands : USpreadsheetCommandBase<AccessibilityComman
     /// </summary>
     public async Task SetSheetLocked(bool isLocked)
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseSheet(queue);
         await queue.SetAction("getWorksheetPermission")
                    .SetAction(isLocked ? "setReadOnly" : "setEditable")
@@ -191,7 +191,7 @@ public class AccessibilityCommands : USpreadsheetCommandBase<AccessibilityComman
     /// </summary>
     public async Task<bool> GetSheetLocked()
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseSheet(queue);
         var canEdit = await queue.SetAction("getWorksheetPermission")
                                  .SetAction("canEdit")
@@ -204,7 +204,7 @@ public class AccessibilityCommands : USpreadsheetCommandBase<AccessibilityComman
     /// </summary>
     public async Task SetWorksheetPermission(EWorksheetPermissionPoint point, bool value)
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseSheet(queue);
         await queue.SetAction("getWorksheetPermission")
                    .SetAction("setPoint", point.ToUniverPoint(), value)
@@ -216,7 +216,7 @@ public class AccessibilityCommands : USpreadsheetCommandBase<AccessibilityComman
     /// </summary>
     public async Task<bool> GetWorksheetPermission(EWorksheetPermissionPoint point)
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseSheet(queue);
         return await queue.SetAction("getWorksheetPermission")
                           .SetAction("getPoint", point.ToUniverPoint())
@@ -228,7 +228,7 @@ public class AccessibilityCommands : USpreadsheetCommandBase<AccessibilityComman
     /// </summary>
     public async Task<Dictionary<string, bool>> GetWorksheetPermissions()
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseSheet(queue);
         return await queue.SetAction("getWorksheetPermission")
                           .SetAction("getSnapshot")

@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using UniverBlazored.Generic;
+using UniverBlazored.Generic.Services;
 using UniverBlazored.Spreadsheets.Data.Workbook;
 using UniverBlazored.Spreadsheets.Services;
 
@@ -18,7 +19,13 @@ public static class UniverSpreadsheetService
     public static void AddUniverSpreadsheets(this IServiceCollection services, Action<UniverConfig>? configuration = null)
     {
         services.Configure(configuration == null ? config => {} : configuration);
-        services.AddScoped<IUniverJsInterop, UniverSpreadsheetJsInterop>();
+        services.AddScoped<ISpreadsheetCommandScheduler, SpreadsheetCommandScheduler>();
+        services.AddScoped<UniverSpreadsheetJsInterop>();
+        services.AddScoped<IUniverJsInterop>(sp =>
+            new SafeUniverJsInterop(
+                sp.GetRequiredService<UniverSpreadsheetJsInterop>(),
+                sp.GetRequiredService<ISpreadsheetCommandScheduler>(),
+                sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SafeUniverJsInterop>>()));
         services.AddScoped<IUniverSpreadsheetListener, UniverSpreadsheetListener>();
     }
 }

@@ -2,43 +2,30 @@ using UniverBlazored.Spreadsheets.Data.Workbook;
 
 namespace UniverBlazored.Spreadsheets.Services.Commands;
 
-/// <summary>
-/// Represents an immutable execution context for a spreadsheet command operation.
-/// </summary>
 public sealed class USpreadsheetSnapshot
 {
-    /// <summary>
-    /// Target sheet for the operation (if any)
-    /// </summary>
+    public string? InstanceId { get; }
     public USheetInfo? SheetSelected { get; }
-
-    /// <summary>
-    /// Target range for the operation (if any)
-    /// </summary>
     public URange? RangeSelected { get; }
 
-    /// <summary>
-    /// Represents an immutable execution context for a spreadsheet command operation.
-    /// </summary>
-    /// <param name="sheetSelected">Target sheet for the operation (if any)</param>
-    /// <param name="rangeSelected">Target range for the operation (if any)</param>
-    public USpreadsheetSnapshot(USheetInfo? sheetSelected = null, URange? rangeSelected = null)
+    public USpreadsheetSnapshot(
+        string? instanceId = null,
+        USheetInfo? sheetSelected = null,
+        URange? rangeSelected = null)
     {
+        InstanceId = instanceId;
         SheetSelected = sheetSelected;
         RangeSelected = rangeSelected;
     }
 
-    /// <summary>
-    /// Creates a new <see cref="USpreadsheetSnapshot"/> with the specified sheet, preserving the current range.
-    /// </summary>
-    /// <param name="sheet">Target sheet</param>
-    /// <returns></returns>
-    public USpreadsheetSnapshot WithSheet(USheetInfo? sheet) => new(sheet, RangeSelected);
+    public USpreadsheetSnapshot WithSheet(USheetInfo? sheet) => new(InstanceId, sheet, RangeSelected);
 
-    /// <summary>
-    /// Creates a new <see cref="USpreadsheetSnapshot"/> with the specified range, preserving the current sheet.
-    /// </summary>
-    /// <param name="range">Target range</param>
-    /// <returns></returns>
-    public USpreadsheetSnapshot WithRange(URange? range) => new(SheetSelected, range);
+    public USpreadsheetSnapshot WithRange(URange? range) => new(InstanceId, SheetSelected, range);
+
+    public USpreadsheetSnapshot WithInstanceId(string instanceId) => new(instanceId, SheetSelected, RangeSelected);
+
+    public SpreadsheetOperationContext ToContext(OperationKind kind = OperationKind.Sheet) => new(
+        InstanceId ?? throw new InvalidOperationException("InstanceId is required to build operation context."),
+        SheetSelected?.id,
+        kind);
 }

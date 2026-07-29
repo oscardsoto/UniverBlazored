@@ -24,22 +24,21 @@ public class CommentCommands : USpreadsheetCommandBase<CommentCommands>
     /// <returns></returns>
     public async Task InsertComment(UniverComment comment) => await UniverJS.ResolveActionAsync("insertComment", Snapshot, comment);
 
-    /// <summary>
-    /// Returns the first (root) comment at the first cell in the active  range
-    /// </summary>
-    /// <param name="delete">True for deleting the selected comment</param>
-    /// <returns></returns>
-    public async Task<UniverComment> GetComment(URange? cell = null, bool delete = false)
+    public async Task<UniverComment> GetComment(bool delete = false)
     {
-        var queue = new UniverQueue(UniverJS);
-        UseRange(queue);
-        var position = await queue.SetAction("getComment").SetAction("getCommentData").ResolveQueueAsync<UniverComment>();
-        if (delete)
+        return await ExecuteAtomically(async inner =>
         {
-            UseRange(queue);
-            await queue.SetAction("getComment").SetAction("delete").ResolveQueueAsync<UniverComment>();
-        }
-        return position;
+            var q = new UniverQueue(inner, Snapshot.ToContext());
+            UseRange(q);
+            var position = await q.SetAction("getComment").SetAction("getCommentData").ResolveQueueAsync<UniverComment>();
+            if (delete)
+            {
+                var dq = new UniverQueue(inner, Snapshot.ToContext());
+                UseRange(dq);
+                await dq.SetAction("getComment").SetAction("delete").ResolveQueueAsync<UniverComment>();
+            }
+            return position;
+        });
     }
 
     /// <summary>
@@ -54,7 +53,7 @@ public class CommentCommands : USpreadsheetCommandBase<CommentCommands>
     /// <returns></returns>
     public async Task ClearComments()
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseSheet(queue);
         await queue.SetAction("clearComments").ResolveQueueAsync();
     }

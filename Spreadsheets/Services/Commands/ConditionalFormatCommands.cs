@@ -18,24 +18,22 @@ public class ConditionalFormatCommands : USpreadsheetCommandBase<ConditionalForm
     /// <param name="snapshot"></param>
     public ConditionalFormatCommands(USpreadsheetSnapshot snapshot, IUniverJsInterop univerJs) : base(snapshot, univerJs) { }
 
-    /// <summary>
-    /// Adds a conditional format to the active page in the active range
-    /// </summary>
-    /// <param name="type">Where the conditional format will trigger</param>
-    /// <param name="style">Style that the cell will have</param>
-    /// <returns></returns>
     public async Task AddConditionalFormat(UConditionType type, UConditionFormatStyle style)
     {
-        var queue = new UniverQueue(UniverJS);
-        UseRange(queue);
-        URange range = await queue.SetAction("getRange").ResolveQueueAsync<URange>();
+        await ExecuteAtomically(async inner =>
+        {
+            var rangeQueue = new UniverQueue(inner, Snapshot.ToContext());
+            UseRange(rangeQueue);
+            URange range = await rangeQueue.SetAction("getRange").ResolveQueueAsync<URange>();
 
-        UseSheet(queue);
-        SetConditionalFormatTypeToQueue(queue, type);
-        SetConditionalFormatStyleToQueue(queue, style);
-        queue.SetAction("setRanges", new URange[] { range }).SetAction("build");
+            var ruleQueue = new UniverQueue(inner, Snapshot.ToContext());
+            UseSheet(ruleQueue);
+            SetConditionalFormatTypeToQueue(ruleQueue, type);
+            SetConditionalFormatStyleToQueue(ruleQueue, style);
+            ruleQueue.SetAction("setRanges", new URange[] { range }).SetAction("build");
 
-        await UniverJS.ResolveActionAsync("addConditionalFormat", Snapshot, queue.ToArray());
+            await inner.ResolveActionAsync("addConditionalFormat", Snapshot, ruleQueue.ToArray());
+        });
     }
 
     /// <summary>
@@ -47,7 +45,7 @@ public class ConditionalFormatCommands : USpreadsheetCommandBase<ConditionalForm
     /// <returns></returns>
     public async Task AddConditionalFormat(UConditionType type, UConditionFormatStyle style, params URange[] ranges)
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseSheet(queue);
         SetConditionalFormatTypeToQueue(queue, type);
         SetConditionalFormatStyleToQueue(queue, style);
@@ -63,7 +61,7 @@ public class ConditionalFormatCommands : USpreadsheetCommandBase<ConditionalForm
     /// <returns></returns>
     public async Task DeleteConditionalFormat(string idRule)
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseSheet(queue);
         await queue.SetAction("deleteConditionalFormattingRule", idRule).ResolveQueueAsync();
     }
@@ -74,7 +72,7 @@ public class ConditionalFormatCommands : USpreadsheetCommandBase<ConditionalForm
     /// <returns></returns>
     public async Task ClearConditionalFormats()
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseSheet(queue);
         await queue.SetAction("clearConditionalFormatRules").ResolveQueueAsync();
     }
@@ -85,7 +83,7 @@ public class ConditionalFormatCommands : USpreadsheetCommandBase<ConditionalForm
     /// <returns>An array of each conditional format in the page</returns>
     public async Task<UConditionalFormatRule[]> GetAllConditionalFormats()
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseSheet(queue);
         return await queue.SetAction("getConditionalFormattingRules").ResolveQueueAsync<UConditionalFormatRule[]>();
     }
@@ -104,7 +102,8 @@ public class ConditionalFormatCommands : USpreadsheetCommandBase<ConditionalForm
             throw new UniverException($"cfId does not exist: {idRule}");
 
         rule.ranges = [range];
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
+        UseSheet(queue);
         await queue.SetAction("setConditionalFormattingRule", idRule, rule).ResolveQueueAsync();
     }
 

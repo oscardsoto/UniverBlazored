@@ -24,7 +24,7 @@ public class RangeCommands : USpreadsheetCommandBase<RangeCommands>
     /// <returns>This, for chaining</returns>
     public async Task SortAscending(params int[] columns)
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseRange(queue);
         await queue.SetAction("sort", columns).ResolveQueueAsync();
     }
@@ -36,7 +36,7 @@ public class RangeCommands : USpreadsheetCommandBase<RangeCommands>
     /// <returns>This, for chaining</returns>
     public async Task SortAscending(params (int column, bool ascending)[] sorts)
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseRange(queue);
         List<object> sort = [];
         foreach (var s in sorts)
@@ -71,7 +71,7 @@ public class RangeCommands : USpreadsheetCommandBase<RangeCommands>
                 action = "mergeVertically";
                 break;
         }
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseRange(queue);
         await queue.SetAction(action, defaultMerge).ResolveQueueAsync();
     }
@@ -82,7 +82,7 @@ public class RangeCommands : USpreadsheetCommandBase<RangeCommands>
     /// <returns></returns>
     public async Task BreakMerge()
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseRange(queue);
         await queue.SetAction("breakApart").ResolveQueueAsync();
     }
@@ -101,7 +101,7 @@ public class RangeCommands : USpreadsheetCommandBase<RangeCommands>
     /// </summary>
     public async Task<bool> RangeIsPartOfMerge()
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseRange(queue);
         return await queue.SetAction("isPartOfMerge").ResolveQueueAsync<bool>();
     }
@@ -112,7 +112,7 @@ public class RangeCommands : USpreadsheetCommandBase<RangeCommands>
     /// <returns></returns>
     public async Task CreateFilter()
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseRange(queue);
         await queue.SetAction("createFilter").ResolveQueueAsync();
     }
@@ -132,7 +132,7 @@ public class RangeCommands : USpreadsheetCommandBase<RangeCommands>
     /// <returns>URange object with the range of the filter</returns>
     public async Task<URange?> GetFilter()
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseSheet(queue);
         return await queue.SetAction("getFilter").SetAction("getRange").SetAction("getRange").ResolveQueueAsync<URange?>();
     }
@@ -143,7 +143,7 @@ public class RangeCommands : USpreadsheetCommandBase<RangeCommands>
     /// <returns></returns>
     public async Task RemoveFilter()
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseSheet(queue);
         await queue.SetAction("getFilter").SetAction("remove").ResolveQueueAsync();
     }

@@ -1,29 +1,24 @@
-/**
- * Initialize Univer from server's configuration
- * @param {*} config Configuration object to initialize the component
- * @param {*} language Language to initialize the component
- */
-export function initUniver(config, language) {
-    
-    /**
-     * config attributes:
-     * 
-     * hasShort: Bool
-     * hasDataValidation: Bool
-     * hasFilter: Bool
-     * hasConditionalFormatting: Bool
-     * hasHyperLink: Bool
-     * hasDrawing: Bool
-     * hasThreadComment: Bool
-     * hasCrosshair: Bool
-     * hasWatermark: Bool
-     * watermarkLabel: String
-     * 
-     * newSheetName: String
-     * idDiv: string
-     * fontsConfig: UniverFontsConfig
-     */
+const sessions = new Map();
 
+function getApi(instanceId) {
+    if (instanceId && sessions.has(instanceId))
+        return sessions.get(instanceId).univerAPI;
+    return window.univerAPI;
+}
+
+function getSession(instanceId) {
+    if (!sessions.has(instanceId)) {
+        if (instanceId)
+            sessions.set(instanceId, { univerAPI: null, listenerNET: null });
+        else if (!window.univerAPI)
+            return null;
+        else
+            return sessions.get(instanceId);
+    }
+    return sessions.get(instanceId);
+}
+
+export function initUniver(instanceId, config, language) {
     const { createUniver } = UniverPresets;
     const { LocaleType, merge } = UniverCore;
     const { defaultTheme } = UniverDesign;
@@ -38,24 +33,25 @@ export function initUniver(config, language) {
     });
 
     univerAPI.createUniverSheet({ name: config.newSheetName })
-    window.univerAPI = univerAPI;
-    window.univerAPI.getUserService = function() { return window.univerAPI.getUserManager()._userManagerService }
 
-    // Fction for the "Listener"
-    window.univerAPI.addEvent(window.univerAPI.Event.SheetEditEnded, async (e) => {
+    const session = { univerAPI, listenerNET: null };
+    sessions.set(instanceId, session);
+
+    session.univerAPI.getUserService = function() { return session.univerAPI.getUserManager()._userManagerService }
+
+    session.univerAPI.addEvent(session.univerAPI.Event.SheetEditEnded, async (e) => {
         var info = {
             row: e.row,
             col: e.column,
             unitId: e.workbook.id,
-            subUnitId: e.worksheet.getSheetId()
+            subUnitId: e.worksheet.getSheetId(),
+            instanceId: instanceId
         }
-        if (!window.listenerNET.listeners.includes(info))
+        if (!session.listenerNET || !session.listenerNET.listeners.includes(info))
             return
 
         var cellValue = e.worksheet.getRange(info.row, info.col).getValue()
-
-        // Send the signal to the listener in server, indicating which position and value are assigned
-        await window.listenerNET.net.invokeMethodAsync("OnDataChanged", info, cellValue)
+        await session.listenerNET.net.invokeMethodAsync("OnDataChanged", info, cellValue)
     })
 }
 
@@ -186,17 +182,18 @@ function getPlugins(config){
     return plugins
 }
 
-//UniverPresetSheetsConditionalFormattingEnUS,
-// Function for the "ActivityPool"
-export function getAndExecuteMethod(queue, toReturn){
+export function getAndExecuteMethod(instanceId, queue, toReturn){
+    var api = getApi(instanceId)
+    if (!api) return { res: false }
+
     var result = null
     for (var i = 0; i < queue.length; i++){
         if (i == 0){
-            if (typeof window.univerAPI[queue[i].methodName] === "function"){
+            if (typeof api[queue[i].methodName] === "function"){
                 if (queue[i].args.length == 0)
-                    result = window.univerAPI[queue[i].methodName]()
+                    result = api[queue[i].methodName]()
                 else
-                    result = window.univerAPI[queue[i].methodName](...queue[i].args)
+                    result = api[queue[i].methodName](...queue[i].args)
             }
             else{
                 console.error(`Method ${i}: ${queue[i].methodName} does not exist on Univer API`);
@@ -227,34 +224,38 @@ function isPromise(value) {
     return value && (typeof value === 'object' || typeof value === 'function') && typeof value.then === 'function';
 }
 
-function selectSheet(snapshot){
-    var sheet = null
-    if (!snapshot.SheetSelected)
-        sheet = window.univerAPI.getActiveWorkbook().getActiveSheet()
-    else
-        sheet = window.univerAPI.getActiveWorkbook().getSheetBySheetId(snapshot.SheetSelected.id)
-
-    return sheet
+function resolveInstanceId(instanceId_or_snapshot, snapshot) {
+    if (snapshot !== undefined) return instanceId_or_snapshot;
+    if (instanceId_or_snapshot && instanceId_or_snapshot.instanceId) return instanceId_or_snapshot.instanceId;
+    return null;
 }
 
-function selectRange(snapshot){
-    var sheet = selectSheet(snapshot)
+function selectSheet(instanceId, snapshot){
+    var api = getApi(instanceId)
+    if (!api) return null
 
-    var range = null
-    if (!snapshot.RangeSelected)
-        range = sheet.getActiveRange()
-    else
-        range = sheet.getRange(snapshot.RangeSelected)
+    if (!snapshot.sheetSelected)
+        throw new Error("Sheet context is required. Call OnSheet(sheet) before executing this command.")
 
-    return range
+    return api.getActiveWorkbook().getSheetBySheetId(snapshot.sheetSelected.id)
 }
 
-/* 
-    Additional functions 
-*/
-export function getSheetsInfo(){
+function selectRange(instanceId, snapshot){
+    var sheet = selectSheet(instanceId, snapshot)
+    if (!sheet) return null
+
+    if (!snapshot.rangeSelected)
+        throw new Error("Range context is required. Call OnRange(range) before executing this command.")
+
+    return sheet.getRange(snapshot.rangeSelected)
+}
+
+export function getSheetsInfo(instanceId){
+    var api = getApi(instanceId)
+    if (!api) return []
+
     var result = []
-    window.univerAPI.getActiveWorkbook().getSheets().forEach(sheet => {
+    api.getActiveWorkbook().getSheets().forEach(sheet => {
         result.push({
             id: sheet.getSheetId(),
             name: sheet.getSheetName(),
@@ -269,17 +270,22 @@ export function getSheetsInfo(){
 }
 
 export function hasFilter(snapshot){
-    var range = selectRange(snapshot)
-    
-    var filter = range.getFilter()
+    var instanceId = snapshot.instanceId
+    var sheet = selectSheet(instanceId, snapshot)
+    if (!sheet) return false
+
+    var filter = sheet.getFilter()
     if (filter)
         return true
     return false
 }
 
 export function getCellsStylesInfo(snapshot){
+    var instanceId = snapshot.instanceId
+    var activeRange = selectRange(instanceId, snapshot)
+    if (!activeRange) return []
+
     var mapStyles = []
-    var activeRange = selectRange(snapshot)
     activeRange.getCellStyles().forEach(styleArray => {
         var arrayStyles = []
         styleArray.forEach(style => {
@@ -300,10 +306,6 @@ export function getCellsStylesInfo(snapshot){
     })
 
     var dictionary = []
-    // {
-    //     "style"      s: null,
-    //     "positions"  p: []
-    // }
     var { startRow, startColumn, endRow, endColumn } = activeRange.getRange();
     for (var row = 0; row < mapStyles.length; row++){
         for (var col = 0; col < mapStyles[row].length; col++){
@@ -326,7 +328,10 @@ export function getCellsStylesInfo(snapshot){
 
 export function setRangeStyles(snapshot, style, ranges)
 {
-    var activeSheet = selectSheet(snapshot)
+    var instanceId = snapshot.instanceId
+    var activeSheet = selectSheet(instanceId, snapshot)
+    if (!activeSheet) return
+
     ranges.forEach((range) => {
         var selectRange = activeSheet.getRange(range)
         if (style.color !== null)
@@ -398,7 +403,10 @@ export function setRangeStyles(snapshot, style, ranges)
 }
 
 export function setRangeBorders(snapshot, borders, ranges){
-    var activeSheet = selectSheet(snapshot)
+    var instanceId = snapshot.instanceId
+    var activeSheet = selectSheet(instanceId, snapshot)
+    if (!activeSheet) return
+
     ranges.forEach((range) => {
         var selectRange = activeSheet.getRange(range)
         borders.forEach((border) => selectRange.setBorder(border.type, border.style, border.color))
@@ -406,7 +414,10 @@ export function setRangeBorders(snapshot, borders, ranges){
 }
 
 export function getAllMerges(snapshot){
-    var sheet = selectSheet(snapshot)
+    var instanceId = snapshot.instanceId
+    var sheet = selectSheet(instanceId, snapshot)
+    if (!sheet) return []
+
     var result = []
     sheet.getMergedRanges().forEach(range => {
         result.push(range.getRange())
@@ -415,21 +426,29 @@ export function getAllMerges(snapshot){
 }
 
 export function insertHyperLink(snapshot, text, link){
-    const range = selectRange(snapshot)
-    
-    // Create hyperlink using newRichText().insertLink
-    const richText = window.univerAPI.newRichText()
+    var instanceId = snapshot.instanceId
+    const range = selectRange(instanceId, snapshot)
+    if (!range) return
+
+    const api = getApi(instanceId)
+    if (!api) return
+
+    const richText = api.newRichText()
         .insertLink(text, link);
-    
-    // Set to cell
+
     range.setRichTextValueForCell(richText);
 }
 
 export async function insertComment(snapshot, comment){
-    const range = selectRange(snapshot)
+    var instanceId = snapshot.instanceId
+    const range = selectRange(instanceId, snapshot)
+    if (!range) return
 
-    const _comment = window.univerAPI.newTheadComment()
-                                    .setContent(window.univerAPI.newRichText().insertText(comment.text.dataStream))
+    const api = getApi(instanceId)
+    if (!api) return
+
+    const _comment = api.newTheadComment()
+                                    .setContent(api.newRichText().insertText(comment.text.dataStream))
                                     .setDateTime(new Date(comment.dT))
                                     .setId(comment.id)
                                     .setPersonId(comment.userId)
@@ -437,22 +456,29 @@ export async function insertComment(snapshot, comment){
 }
 
 export function getAllComments(snapshot){
-    const comments = selectSheet(snapshot).getComments()
+    var instanceId = snapshot.instanceId
+    const comments = selectSheet(instanceId, snapshot).getComments()
+    if (!comments) return []
+
     var result = []
     comments.forEach((comment) => { result.push(comment.getCommentData()) });
     return result;
 }
 
 export function getImagesId(snapshot){
-    const images = selectSheet(snapshot).getImages()
+    var instanceId = snapshot.instanceId
+    const images = selectSheet(instanceId, snapshot).getImages()
+    if (!images) return []
+
     var result = []
     images.forEach((img) => { result.push(img.getId()) })
     return result
 }
 
 export async function getImageById(snapshot, id, withSource){
+    var instanceId = snapshot.instanceId
     var image = null
-    await selectSheet(snapshot).getImageById(id).toBuilder().buildAsync().then(result => {
+    await selectSheet(instanceId, snapshot).getImageById(id).toBuilder().buildAsync().then(result => {
         if (!withSource){
             result.source = ""
         }
@@ -463,32 +489,34 @@ export async function getImageById(snapshot, id, withSource){
 
 export function addConditionalFormat(snapshot, queue)
 {
-    var rule = getAndExecuteMethod(queue, true)
-    selectSheet(snapshot).addConditionalFormattingRule(rule.res)
+    var instanceId = snapshot.instanceId
+    var rule = getAndExecuteMethod(instanceId, queue, true)
+    selectSheet(instanceId, snapshot).addConditionalFormattingRule(rule.res)
 }
 
-/* 
-    Listener Functions
- */
-export function initListenerObject(dotNetLstnr){
-    window.listenerNET = {}
-    window.listenerNET.net = dotNetLstnr
-    window.listenerNET.listeners = []
+export function initListenerObject(instanceId, dotNetLstnr){
+    var session = getSession(instanceId)
+    if (!session) return
+    session.listenerNET = { net: dotNetLstnr, listeners: [] }
 }
 
-export function addListenerRange(listener) { 
-    window.listenerNET.listeners.push(listener)
+export function addListenerRange(instanceId, listener) {
+    var session = getSession(instanceId)
+    if (!session || !session.listenerNET) return
+    session.listenerNET.listeners.push(listener)
 }
 
-export function removeListener(listener) {
-    var index = window.listenerNET.listeners.indexOf(listener)
+export function removeListener(instanceId, listener) {
+    var session = getSession(instanceId)
+    if (!session || !session.listenerNET) return
+    var index = session.listenerNET.listeners.indexOf(listener)
     if (index > -1){
-        window.listenerNET.listeners.splice(index, 1)
+        session.listenerNET.listeners.splice(index, 1)
     }
 }
 
-function getWorksheetPermission(snapshot){
-    return selectSheet(snapshot).getWorksheetPermission()
+function getWorksheetPermission(instanceId, snapshot){
+    return selectSheet(instanceId, snapshot).getWorksheetPermission()
 }
 
 function rangesEqual(first, second){
@@ -499,8 +527,11 @@ function rangesEqual(first, second){
 }
 
 export async function protectRangesInSheet(snapshot, configs){
-    const sheet = selectSheet(snapshot)
-    const permission = getWorksheetPermission(snapshot)
+    var instanceId = snapshot.instanceId
+    const sheet = selectSheet(instanceId, snapshot)
+    if (!sheet) return
+
+    const permission = getWorksheetPermission(instanceId, snapshot)
 
     const payload = (configs ?? []).map(cfg => ({
         ranges: (cfg.ranges ?? []).map(range => sheet.getRange(range)),
@@ -511,7 +542,8 @@ export async function protectRangesInSheet(snapshot, configs){
 }
 
 export async function getProtectedRangesInSheet(snapshot){
-    const rules = await getWorksheetPermission(snapshot).listRangeProtectionRules()
+    var instanceId = snapshot.instanceId
+    const rules = await getWorksheetPermission(instanceId, snapshot).listRangeProtectionRules()
     return rules.map(rule => ({
         ruleId: rule.id,
         ranges: rule.ranges.map(range => range.getRange()),
@@ -520,20 +552,47 @@ export async function getProtectedRangesInSheet(snapshot){
 }
 
 export async function unprotectRuleIdsInSheet(snapshot, ruleIds){
-    await getWorksheetPermission(snapshot).unprotectRules(ruleIds ?? [])
+    var instanceId = snapshot.instanceId
+    await getWorksheetPermission(instanceId, snapshot).unprotectRules(ruleIds ?? [])
 }
 
 export async function isActiveRangeLocked(snapshot){
-    const selected = selectRange(snapshot).getRange()
-    const rules = await getWorksheetPermission(snapshot).listRangeProtectionRules()
+    var instanceId = snapshot.instanceId
+    const selected = selectRange(instanceId, snapshot).getRange()
+    const rules = await getWorksheetPermission(instanceId, snapshot).listRangeProtectionRules()
 
     return rules.some(rule => rule.ranges.some(range => rangesEqual(range.getRange(), selected)))
 }
 
+export function batchSheetOperations(instanceId, sheetId, operations) {
+    var api = getApi(instanceId);
+    if (!api) return [];
+    var sheet = api.getActiveWorkbook().getSheetBySheetId(sheetId);
+    if (!sheet) return [];
+    var results = [];
+    for (var i = 0; i < operations.length; i++) {
+        var op = operations[i];
+        var target = op.range ? sheet.getRange(op.range) : sheet;
+        var method = target[op.method];
+        if (typeof method === 'function')
+            results.push(method.apply(target, op.args || []));
+    }
+    return results;
+}
+
+export function removeAllEvents(instanceId) {
+    var api = getApi(instanceId);
+    if (!api) return;
+    try { api.removeEvent(api.Event.SheetEditEnded); } catch (e) { }
+}
+
 export async function setActiveRangeLock(snapshot, isLocked, options){
-    const selected = selectRange(snapshot).getRange()
-    const sheet = selectSheet(snapshot)
-    const permission = getWorksheetPermission(snapshot)
+    var instanceId = snapshot.instanceId
+    const selected = selectRange(instanceId, snapshot).getRange()
+    const sheet = selectSheet(instanceId, snapshot)
+    if (!sheet) return
+
+    const permission = getWorksheetPermission(instanceId, snapshot)
 
     if (isLocked){
         await permission.protectRanges([{

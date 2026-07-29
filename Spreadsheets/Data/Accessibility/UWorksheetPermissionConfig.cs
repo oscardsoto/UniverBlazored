@@ -20,4 +20,14 @@ public class UWorksheetPermissionConfig
     /// Optional batch range protections by reference strings.
     /// </summary>
     public UWorksheetPermissionRangeProtectionConfig[]? RangeProtections { get; set; }
+
+    /// <summary>
+    /// Worksheet permission configuration that mirrors Univer applyConfig contract.
+    /// </summary>
+    public UWorksheetPermissionConfig()
+    {
+        // Initialize the Points dictionary to avoid null reference issues
+        Points = new Dictionary<string, bool>();
+        RangeProtections = Array.Empty<UWorksheetPermissionRangeProtectionConfig>();
+    }
 }

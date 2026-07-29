@@ -46,12 +46,18 @@ Once the component is initialized, you can get access to the component's Agent a
 ```csharp
 var agent = Univer.Agent;
 var sheets = await agent.GetSheetsInfo();
-foreach (var sheet in sheets)
-{
-    await agent.SetActiveSheet(sheet.id);
-    // Perform operations in the sheet
-}
+var firstSheet = sheets[0];
+var secondSheet = sheets[1];
+
+await Task.WhenAll(
+    agent.ForSheet(firstSheet).Data().OnRange(new URange(0, 0, 0, 0)).SetValue("Summary"),
+    agent.ForSheet(secondSheet).Data().OnRange(new URange(0, 0, 0, 0)).SetValue("Details"));
 ```
+
+Sheet operations require an explicit sheet and range context. Requests for the
+same sheet are executed in submission order; requests for different sheets can
+be awaited concurrently. Workbook-wide UI and structural operations are
+serialized with sheet operations.
 
 See the [documentation](https://oscardsoto.github.io/univer-blazored-docs/) for more information.
 

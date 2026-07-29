@@ -1,6 +1,5 @@
 using UniverBlazored.Generic;
 using UniverBlazored.Generic.Data;
-using UniverBlazored.Spreadsheets.Data.Styles;
 using UniverBlazored.Spreadsheets.Data.Workbook;
 using UniverBlazored.Spreadsheets.Services.Commands;
 
@@ -13,177 +12,130 @@ public class UniverSpreadsheetAgent
 {
     private readonly IUniverJsInterop univerJS;
 
-    /// <summary>
-    /// All data operations
-    /// </summary>
-    public DataCommands Data { get; private set; }
+    public sealed class SheetScope
+    {
+        private readonly IUniverJsInterop univerJS;
+        private readonly USheetInfo sheet;
+        private readonly string instanceId;
+
+        internal SheetScope(IUniverJsInterop univerJS, USheetInfo sheet, string instanceId)
+        {
+            this.univerJS = univerJS;
+            this.sheet = sheet;
+            this.instanceId = instanceId;
+        }
+
+        public DataCommands Data() => new(new USpreadsheetSnapshot(instanceId, sheet), univerJS);
+        public StyleCommands Styles() => new(new USpreadsheetSnapshot(instanceId, sheet), univerJS);
+        public ConditionalFormatCommands ConditionalFormats() => new(new USpreadsheetSnapshot(instanceId, sheet), univerJS);
+        public ImageCommands Images() => new(new USpreadsheetSnapshot(instanceId, sheet), univerJS);
+        public RowColumnsCommands RowColumns() => new(new USpreadsheetSnapshot(instanceId, sheet), univerJS);
+        public CommentCommands Comments() => new(new USpreadsheetSnapshot(instanceId, sheet), univerJS);
+        public RangeCommands Ranges() => new(new USpreadsheetSnapshot(instanceId, sheet), univerJS);
+        public AccessibilityCommands Accessibility() => new(new USpreadsheetSnapshot(instanceId, sheet), univerJS);
+        public BatchScope Batch() => new(univerJS, instanceId, sheet.id);
+    }
+
+    private readonly string instanceId;
+
+    public DataCommands Data() => new(new USpreadsheetSnapshot(instanceId), univerJS);
+    public StyleCommands Styles() => new(new USpreadsheetSnapshot(instanceId), univerJS);
+    public ConditionalFormatCommands ConditionalFormats() => new(new USpreadsheetSnapshot(instanceId), univerJS);
+    public ImageCommands Images() => new(new USpreadsheetSnapshot(instanceId), univerJS);
+    public RowColumnsCommands RowColumns() => new(new USpreadsheetSnapshot(instanceId), univerJS);
+    public CommentCommands Comments() => new(new USpreadsheetSnapshot(instanceId), univerJS);
+    public RangeCommands Ranges() => new(new USpreadsheetSnapshot(instanceId), univerJS);
+    public AccessibilityCommands Accessibility() => new(new USpreadsheetSnapshot(instanceId), univerJS);
 
     /// <summary>
-    /// All styles operations
+    /// Creates a scope for operating on a specific sheet
     /// </summary>
-    public StyleCommands Styles { get; private set; }
+    /// <param name="sheet">Sheet object</param>
+    /// <returns></returns>
+    public SheetScope ForSheet(USheetInfo sheet) => new(univerJS, sheet, instanceId);
 
     /// <summary>
-    /// All condiitonal format operations
+    /// Creates a scope for operating on a specific sheet
     /// </summary>
-    public ConditionalFormatCommands ConditionalFormats { get; private set; }
-
-    /// <summary>
-    /// All image operations
-    /// </summary>
-    public ImageCommands Images { get; private set; }
-
-    /// <summary>
-    /// All rows & columns operations
-    /// </summary>
-    public RowColumnsCommands RowColumns { get; private set; }
-
-    /// <summary>
-    /// All comment operations
-    /// </summary>
-    public CommentCommands Comments { get; private set; }
-
-    /// <summary>
-    /// All range operations
-    /// </summary>
-    public RangeCommands Ranges { get; private set; }
-
-
-    /// <summary>
-    /// All accessibility operations
-    /// </summary>
-    public AccessibilityCommands Accessibility { get; private set; }
+    /// <param name="sheetId">Sheet id</param>
+    /// <returns></returns>
+    public SheetScope ForSheetId(string sheetId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sheetId);
+        return new(univerJS, new USheetInfo { id = sheetId }, instanceId);
+    }
 
     /// <summary>
     /// Univer's agent. Enables operations inside Blazor
     /// </summary>
     /// <param name="univerJS">Univer's interop to get acces to Univer</param>
-    public UniverSpreadsheetAgent(IUniverJsInterop univerJS)
+    public UniverSpreadsheetAgent(IUniverJsInterop univerJS, string instanceId)
     {
-        this.univerJS       = univerJS;
-        Data                = new(new USpreadsheetSnapshot(), univerJS);
-        Styles              = new(new USpreadsheetSnapshot(), univerJS);
-        ConditionalFormats  = new(new USpreadsheetSnapshot(), univerJS);
-        Images              = new(new USpreadsheetSnapshot(), univerJS);
-        RowColumns          = new(new USpreadsheetSnapshot(), univerJS);
-        Comments            = new(new USpreadsheetSnapshot(), univerJS);
-        Ranges              = new(new USpreadsheetSnapshot(), univerJS);
-        Accessibility       = new(new USpreadsheetSnapshot(), univerJS);
+        this.univerJS = univerJS;
+        this.instanceId = instanceId;
     }
 
-    /// <summary>
-    /// Toggles dark mode in the component.
-    /// </summary>
-    /// <param name="darkMode"> If is true, it will be enabled. If false, it will be disabled.</param>
-    /// <returns></returns>
+    private UniverQueue CreateStructuralQueue() => new(univerJS, new SpreadsheetOperationContext(instanceId, null, OperationKind.Structural));
+
+    private UniverQueue CreateUiQueue() => new(univerJS, new SpreadsheetOperationContext(instanceId, null, OperationKind.Ui));
+
+    private UniverQueue CreateWorkbookQueue() => new(univerJS, new SpreadsheetOperationContext(instanceId, null, OperationKind.Workbook));
+
     public async Task ToggleDarkMode(bool darkMode)
     {
-        var queue = new UniverQueue(univerJS);
+        var queue = CreateStructuralQueue();
         await queue.SetAction("toggleDarkMode", darkMode).ResolveQueueAsync();
     }
 
-    /// <summary>
-    /// Sets the active sheet to the component
-    /// </summary>
-    /// <param name="idSheet">Id of the sheet to put the changes.</param>
     public async Task SetActiveSheet(string idSheet)
     {
-        var queue = new UniverQueue(univerJS);
+        var queue = CreateUiQueue();
         await queue.SetAction("getActiveWorkbook").SetAction("setActiveSheet", idSheet).ResolveQueueAsync();
     }
 
-    /// <summary>
-    /// Sets the range to work in the active sheet on the component
-    /// </summary>
-    /// <param name="range"></param>
     public async Task SetActiveRange(URange range)
     {
-        var queue = new UniverQueue(univerJS);
+        var queue = CreateUiQueue();
         await queue.SetAction("getActiveWorkbook").SetAction("getActiveSheet").SetAction("getRange", range).SetAction("activate").ResolveQueueAsync();
     }
 
-    /// <summary>
-    /// Return all sheets information
-    /// </summary>
-    /// <returns></returns>
-    public async Task<USheetInfo[]> GetSheetsInfo() => await univerJS.ResolveActionAsync<USheetInfo[]>("getSheetsInfo");
-
-    /// <summary>
-    /// Adds a new Worksheet in the active workbook
-    /// </summary>
-    /// <param name="sheetName">Name of the new worksheet</param>
-    /// <param name="cols">Amount of columns that the worksheet will have</param>
-    /// <param name="rows">Amount of rows that the worksheet will have</param>
-    /// <param name="hexColorTab">Color of its tab (in hexadecimal)</param>
-    /// <returns></returns>
-    public async Task<USheetInfo> AddNewSheet(string sheetName, int rows, int cols, string hexColorTab = null)
+    public async Task<USheetInfo[]> GetSheetsInfo()
     {
-        var queue = new UniverQueue(univerJS);
-        var id = await queue.SetAction("getActiveWorkbook").SetAction("create", sheetName, rows + 1, cols + 1).SetAction("setTabColor", hexColorTab).SetAction("getSheetId").ResolveQueueAsync<string>();
-        await SetActiveSheet(id);
-        return new()
-        {
-            id = id,
-            name = sheetName,
-            maxUsed = new(0, rows - 1, 0, cols - 1),
-            tabColor = hexColorTab
-        };
+        return await univerJS.ResolveActionAsync<USheetInfo[]>("getSheetsInfo", instanceId);
     }
 
-    /// <summary>
-    /// Removes the specified sheet
-    /// </summary>
-    /// <param name="idSheet">Id for the sheet to delete. If null or empty, deletes the active sheet</param>
-    /// <returns></returns>
-    public async Task DeleteSheet(string idSheet = null)
+    public async Task<USheetInfo> AddNewSheet(string sheetName, int rows, int cols, string hexColorTab = null)
     {
-        var queue = new UniverQueue(univerJS);
-        if (string.IsNullOrEmpty(idSheet))
-            idSheet = await queue.SetAction("getActiveWorkbook")
-                                 .SetAction("getActiveSheet")
-                                 .SetAction("getId").ResolveQueueAsync<string>();
+        var queue = CreateWorkbookQueue();
+        var id = await queue.SetAction("getActiveWorkbook").SetAction("create", sheetName, rows + 1, cols + 1).SetAction("setTabColor", hexColorTab).SetAction("getSheetId").ResolveQueueAsync<string>();
 
+        return new() { id = id, name = sheetName, maxUsed = new(0, rows - 1, 0, cols - 1), tabColor = hexColorTab };
+    }
+
+    public async Task DeleteSheet(string idSheet)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(idSheet);
+        var queue = CreateWorkbookQueue();
         await queue.SetAction("getActiveWorkbook").SetAction("deleteSheet", idSheet).ResolveQueueAsync();
     }
 
-    /// <summary>
-    /// Hide the active sheet
-    /// </summary>
-    /// <returns></returns>
-    public async Task HideSheet(string idSheet = null)
+    public async Task HideSheet(string idSheet)
     {
-        var queue = new UniverQueue(univerJS);
-        if (string.IsNullOrEmpty(idSheet))
-            idSheet = await queue.SetAction("getActiveWorkbook")
-                                 .SetAction("getActiveSheet")
-                                 .SetAction("getId").ResolveQueueAsync<string>();
-
+        ArgumentException.ThrowIfNullOrWhiteSpace(idSheet);
+        var queue = CreateWorkbookQueue();
         await queue.SetAction("getActiveWorkbook").SetAction("getSheetBySheetId", idSheet).SetAction("hideSheet").ResolveQueueAsync();
     }
 
-    /// <summary>
-    /// Unhide the active sheet
-    /// </summary>
-    /// <returns></returns>
-    public async Task ShowSheet(string idSheet = null)
+    public async Task ShowSheet(string idSheet)
     {
-        var queue = new UniverQueue(univerJS);
-        if (string.IsNullOrEmpty(idSheet))
-            idSheet = await queue.SetAction("getActiveWorkbook")
-                                 .SetAction("getActiveSheet")
-                                 .SetAction("getId").ResolveQueueAsync<string>();
-
+        ArgumentException.ThrowIfNullOrWhiteSpace(idSheet);
+        var queue = CreateWorkbookQueue();
         await queue.SetAction("getActiveWorkbook").SetAction("getSheetBySheetId", idSheet).SetAction("showSheet").ResolveQueueAsync();
     }
 
-    /// <summary>
-    /// Add a new list of installed fonts
-    /// </summary>
-    /// <param name="fonts">Fonts info</param>
-    /// <returns></returns>
     public async Task AddNewFonts(params UniverFont[] fonts)
     {
-        var queue = new UniverQueue(univerJS);
+        var queue = CreateStructuralQueue();
         await queue.SetAction("addFonts", [fonts]).ResolveQueueAsync();
     }
 }

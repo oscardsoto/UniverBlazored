@@ -3,48 +3,32 @@ using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
 using UniverBlazored.Generic;
 using UniverBlazored.Generic.Data;
+using UniverBlazored.Spreadsheets.Services;
 
 namespace UniverBlazored.Spreadsheets.Services;
 
-/// <summary>
-/// Interface that provides interoperability with Univer's spreadsheets and Blazor.
-/// </summary>
 public class UniverSpreadsheetJsInterop : IUniverJsInterop
 {
     private readonly IJSRuntime runtime;
 
     private readonly UniverConfig config;
 
-    /// <summary>
-    /// Module to initialize Univer in the component
-    /// </summary>
     public Lazy<Task<IJSObjectReference>> moduleTask { get; private set; }
 
-    /// <summary>
-    /// Action Queue for execute in FacadeAPI for Univer
-    /// </summary>
-    /// <value></value>
     public Queue<UniverQueueValue> actionQueue { get; private set; }
 
-    /// <summary>
-    /// Interface that provides interoperability with Univer's spreadsheets and Blazor.
-    /// </summary>
-    /// <param name="runtime">Js Runtime</param>
-    /// <param name="options">Configuration options</param>
     public UniverSpreadsheetJsInterop(IJSRuntime runtime, IOptions<UniverConfig> options)
     {
         this.runtime = runtime;
         config = options.Value;
-        moduleTask = new (() => runtime.InvokeAsync<IJSObjectReference>("import", "./_content/UniverBlazored/univer/xlsx/initUniver.min.js?v=1.4").AsTask());
+        moduleTask = new (() => runtime.InvokeAsync<IJSObjectReference>("import", "./_content/UniverBlazored/univer/xlsx/initUniver.js?v=1.5").AsTask());
         actionQueue = new();
     }
 
-    /// <summary>
-    /// Sets all instances of all scripts from Univer acording to the version
-    /// </summary>
-    /// <param name="newIdDiv">The new Id for the div to execute Univer</param>
-    /// <returns></returns>
     public async Task InitializeAsync(string newIdDiv)
+        => await InitializeAsync("default", newIdDiv);
+
+    public async Task InitializeAsync(string instanceId, string newIdDiv)
     {
         var imports = new UniverJsImports(runtime);
         var univers = GetUniverLinks();
@@ -56,85 +40,98 @@ public class UniverSpreadsheetJsInterop : IUniverJsInterop
         }
             
         await imports.DisposeAsync();
-        await Task.Delay(1000);         // 1 sec delay for waiting to all presets to charge
+        await Task.Delay(1000);
         var module = await moduleTask.Value;
         config.InitialConfig.SetNewIdDiv(newIdDiv);
-        await module.InvokeVoidAsync("initUniver", config.InitialConfig, config.Language);
+        await module.InvokeVoidAsync("initUniver", instanceId, config.InitialConfig, config.Language);
     }
 
-    /// <summary>
-    /// Sets an action for the FacadeAPI 
-    /// </summary>
-    /// <param name="action">Method's name to execute on the Facade's API</param>
-    /// <param name="args">Arguments for the method (must be serializables for Json to pass into JS)</param>
-    /// <returns>This, for linking</returns>   
     public IUniverJsInterop SetAction(string action, params object[] args)
     {
         actionQueue.Enqueue(new(action, args));
         return this;
     }
 
-    /// <summary>
-    /// Resolve the queue
-    /// </summary>
-    /// <returns></returns>
     public async Task ResolveAsync()
     {
         var module = await moduleTask.Value;
-        var result = await module.InvokeAsync<UniverResponse<bool>>("getAndExecuteMethod", actionQueue.ToArray(), false);
+        var result = await module.InvokeAsync<UniverResponse<bool>>("getAndExecuteMethod", "default", actionQueue.ToArray(), false);
         if (!result.res)
             throw new UniverException($"Method in queue cannot be found in pointer.");
         actionQueue.Clear();
     }
 
-    /// <summary>
-    /// Resolve the queue
-    /// </summary>
-    /// <returns></returns>
     public async Task ResolveAsync(Queue<UniverQueueValue> actionQueue)
     {
         var module = await moduleTask.Value;
-        var result = await module.InvokeAsync<UniverResponse<bool>>("getAndExecuteMethod", actionQueue.ToArray(), false);
+        var result = await module.InvokeAsync<UniverResponse<bool>>("getAndExecuteMethod", "default", actionQueue.ToArray(), false);
         if (!result.res)
             throw new UniverException($"Method in queue cannot be found in pointer.");
     }
 
-    /// <summary>
-    /// Resolve the queue
-    /// </summary>
-    /// <typeparam name="T">Type of value to be expected</typeparam>
-    /// <returns></returns>
     public async Task<T> ResolveAsync<T>()
     {
         var module = await moduleTask.Value;
-        var result = await module.InvokeAsync<UniverResponse<T>>("getAndExecuteMethod", actionQueue.ToArray(), true);
+        var result = await module.InvokeAsync<UniverResponse<T>>("getAndExecuteMethod", "default", actionQueue.ToArray(), true);
         if (result == null)
             throw new UniverException($"Method in queue cannot be found in pointer.");
         actionQueue.Clear();
         return result.res;
     }
 
-    /// <summary>
-    /// Resolve the queue
-    /// </summary>
-    /// <typeparam name="T">Type of value to be expected</typeparam>
-    /// <returns></returns>
     public async Task<T> ResolveAsync<T>(Queue<UniverQueueValue> actionQueue)
     {
         var module = await moduleTask.Value;
-        var result = await module.InvokeAsync<UniverResponse<T>>("getAndExecuteMethod", actionQueue.ToArray(), true);
+        var result = await module.InvokeAsync<UniverResponse<T>>("getAndExecuteMethod", "default", actionQueue.ToArray(), true);
         if (result == null)
             throw new UniverException($"Method in queue cannot be found in pointer.");
         return result.res;
     }
 
-    /// <summary>
-    /// Gets all scripts components for Univer
-    /// </summary>
-    /// <returns>An array of each Univer library to import</returns>
+    public async Task ResolveAsync(SpreadsheetOperationContext context)
+    {
+        var module = await moduleTask.Value;
+        var result = await module.InvokeAsync<UniverResponse<bool>>("getAndExecuteMethod", context.InstanceId, actionQueue.ToArray(), false);
+        if (!result.res)
+            throw new UniverException($"Method in queue cannot be found in pointer.");
+        actionQueue.Clear();
+    }
+
+    public async Task<T> ResolveAsync<T>(SpreadsheetOperationContext context)
+    {
+        var module = await moduleTask.Value;
+        var result = await module.InvokeAsync<UniverResponse<T>>("getAndExecuteMethod", context.InstanceId, actionQueue.ToArray(), true);
+        if (result == null)
+            throw new UniverException($"Method in queue cannot be found in pointer.");
+        actionQueue.Clear();
+        return result.res;
+    }
+
+    public async Task ResolveAsync(SpreadsheetOperationContext context, Queue<UniverQueueValue> actionQueue)
+    {
+        var module = await moduleTask.Value;
+        var result = await module.InvokeAsync<UniverResponse<bool>>("getAndExecuteMethod", context.InstanceId, actionQueue.ToArray(), false);
+        if (!result.res)
+            throw new UniverException($"Method in queue cannot be found in pointer.");
+    }
+
+    public async Task<T> ResolveAsync<T>(SpreadsheetOperationContext context, Queue<UniverQueueValue> actionQueue)
+    {
+        var module = await moduleTask.Value;
+        var result = await module.InvokeAsync<UniverResponse<T>>("getAndExecuteMethod", context.InstanceId, actionQueue.ToArray(), true);
+        if (result == null)
+            throw new UniverException($"Method in queue cannot be found in pointer.");
+        return result.res;
+    }
+
+    public Task ExecuteAtomicAsync(SpreadsheetOperationContext context, Func<IUniverJsInterop, Task> operation)
+        => operation(this);
+
+    public Task<T> ExecuteAtomicAsync<T>(SpreadsheetOperationContext context, Func<IUniverJsInterop, Task<T>> operation)
+        => operation(this);
+
     public string[] GetUniverLinks()
     {
-        // Must-have Links: React, UniverCore Presets & UniverFindAndReplace Presets
         List<string> links = [
             "https://unpkg.com/react@18.3.1/umd/react.production.min.js",
             "https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js",
@@ -151,7 +148,6 @@ public class UniverSpreadsheetJsInterop : IUniverJsInterop
             $"https://unpkg.com/@univerjs/preset-sheets-find-replace@{config.Version}/lib/index.css"
         ];
 
-        // Links depending the Univer's config object
         var univerConfig = config.InitialConfig;
         if (univerConfig.hasShort)
             links.AddRange([
@@ -206,40 +202,24 @@ public class UniverSpreadsheetJsInterop : IUniverJsInterop
             links.AddRange([
                 $"https://unpkg.com/@univerjs/watermark@{config.Version}/lib/umd/index.js",
                 $"https://unpkg.com/@univerjs/watermark@{config.Version}/lib/umd/facade.js",
-                //$"https://unpkg.com/@univerjs/watermark@{config.Version}/lib/umd/locales/{config.Language}.js",
-                //$"https://unpkg.com/@univerjs/watermark@{config.Version}/lib/index.css"
             ]);
 
         if (univerConfig.hasCrosshair)
             links.AddRange([
                 $"https://unpkg.com/@univerjs/sheets-crosshair-highlight@{config.Version}/lib/umd/index.js",
                 $"https://unpkg.com/@univerjs/sheets-crosshair-highlight@{config.Version}/lib/umd/facade.js",
-                //$"https://unpkg.com/@univerjs/sheets-crosshair-highlight@{config.Version}/lib/umd/locales/{config.Language}.js",
                 $"https://unpkg.com/@univerjs/sheets-crosshair-highlight@{config.Version}/lib/index.css"
             ]);
         
         return links.ToArray();
     }
     
-    /// <summary>
-    /// Resolve a function in the javascript module
-    /// </summary>
-    /// <param name="name">Name of the function</param>
-    /// <param name="args">Arguments for that method</param>
-    /// <typeparam name="T">Type of value to return from that method</typeparam>
-    /// <returns>The type desired for the function</returns>
     public async Task<T> ResolveActionAsync<T>(string name, params object[] args)
     {
         var module = await moduleTask.Value;
         return await module.InvokeAsync<T>(name, args);
     }
 
-    /// <summary>
-    /// Resolve a function in the javascript module
-    /// </summary>
-    /// <param name="name">Name of the function</param>
-    /// <param name="args">Arguments for that method</param>
-    /// <returns></returns>
     public async Task ResolveActionAsync(string name, params object[] args)
     {
         var module = await moduleTask.Value;

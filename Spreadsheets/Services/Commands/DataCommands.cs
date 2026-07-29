@@ -22,7 +22,7 @@ public class DataCommands : USpreadsheetCommandBase<DataCommands>
     /// <param name="value">The value to put on the cell</param>
     public async Task SetValue(object value)
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseRange(queue);
         await queue.SetAction("setValue", value).ResolveQueueAsync();
     }
@@ -33,7 +33,7 @@ public class DataCommands : USpreadsheetCommandBase<DataCommands>
     /// <returns>The value from the cell</returns>
     public async Task<TValue> GetValue<TValue>()
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseRange(queue);
         var result = await queue.SetAction("getValue").ResolveQueueAsync<object>();
         JsonElement jsonValue = (JsonElement)result;
@@ -46,7 +46,7 @@ public class DataCommands : USpreadsheetCommandBase<DataCommands>
     /// <param name="values">Values of each row for the range. The size of each array must be the same number as the number of columns used</param>
     public async Task SetValue(params object[][] values)
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseRange(queue);
         await queue.SetAction("setValues", [values]).ResolveQueueAsync();
     }
@@ -57,7 +57,7 @@ public class DataCommands : USpreadsheetCommandBase<DataCommands>
     /// <returns>2 Dimensional array for each row/col values</returns>
     public async Task<object[][]> GetValues()
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseRange(queue);
         return await queue.SetAction("getRawValues").ResolveQueueAsync<object[][]>();
     }
@@ -69,7 +69,7 @@ public class DataCommands : USpreadsheetCommandBase<DataCommands>
     /// <returns></returns>
     public async Task SetFormula(string formula)
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseRange(queue);
         await queue.SetAction("setFormula", formula).ResolveQueueAsync();
     }
@@ -81,7 +81,7 @@ public class DataCommands : USpreadsheetCommandBase<DataCommands>
     /// <returns></returns>
     public async Task SetFormula(params string[][] formulas)
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseRange(queue);
         await queue.SetAction("setFormulas", [formulas]).ResolveQueueAsync();
     }
@@ -92,7 +92,7 @@ public class DataCommands : USpreadsheetCommandBase<DataCommands>
     /// <returns></returns>
     public async Task<string> GetFormula()
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseRange(queue);
         var result = await queue.SetAction("getFormula").ResolveQueueAsync<object>();
         JsonElement jsonRes = (JsonElement)result;
@@ -105,7 +105,7 @@ public class DataCommands : USpreadsheetCommandBase<DataCommands>
     /// <returns></returns>
     public async Task<string[][]> GetFormulas()
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseRange(queue);
         return await queue.SetAction("getFormulas").ResolveQueueAsync<string[][]>();
     }

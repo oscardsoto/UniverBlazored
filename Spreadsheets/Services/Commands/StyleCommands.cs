@@ -25,7 +25,7 @@ public class StyleCommands : USpreadsheetCommandBase<StyleCommands>
     /// <returns>This, for chaining</returns>
     public async Task SetFontProperties(UFontProperties properties)
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseRange(queue);
         if (properties.Color != null)
             queue.SetAction("setFontColor", properties.Color);
@@ -87,7 +87,7 @@ public class StyleCommands : USpreadsheetCommandBase<StyleCommands>
     {
         var enumValueType = borderType.ToString().ToLower();
         var enumValueStyle = (int)borderStyle;
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseRange(queue);
         await queue.SetAction("setBorder", enumValueType, enumValueStyle, color).ResolveQueueAsync();
     }
@@ -98,7 +98,7 @@ public class StyleCommands : USpreadsheetCommandBase<StyleCommands>
     /// <returns></returns>
     public async Task ResetStyle()
     {
-        var queue = new UniverQueue(UniverJS);
+        var queue = CreateQueue();
         UseRange(queue);
         await queue.SetAction("useThemeStyle", "default").ResolveQueueAsync();
     }
