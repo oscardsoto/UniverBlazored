@@ -1,49 +1,42 @@
-using System.Threading.Tasks;
 using UniverBlazored.Generic.Data;
+using UniverBlazored.Spreadsheets.Services;
 
 namespace UniverBlazored.Generic.Services;
 
-/// <summary>
-/// User Manage, from Univer
-/// </summary>
 public class UniverUserManager
 {
     private readonly IUniverJsInterop univerJS;
+    private readonly string instanceId;
 
-    /// <summary>
-    /// User Manage, from Univer
-    /// </summary>
-    /// <param name="service">JS Interop service, for Univer</param>
-    public UniverUserManager(IUniverJsInterop service) 
+    public UniverUserManager(IUniverJsInterop service, string instanceId)
     {
         univerJS = service;
+        this.instanceId = instanceId;
     }
 
-    /// <summary>
-    /// Returns the current user using Univer App
-    /// </summary>
-    /// <returns></returns>
-    public async Task<UniverUser> GetCurrentUser() => await univerJS.SetAction("getUserManager").SetAction("getCurrentUser").ResolveAsync<UniverUser>();
+    private SpreadsheetOperationContext Ctx => new(instanceId, null, OperationKind.Structural);
 
-    /// <summary>
-    /// Returns a list with all users in the Univer App
-    /// </summary>
-    /// <returns></returns>
-    public async Task<List<UniverUser>> ListAllUsers() => await univerJS.SetAction("getUserManager").SetAction("list").ResolveAsync<List<UniverUser>>();
+    public async Task<UniverUser> GetCurrentUser()
+    {
+        var queue = new UniverQueue(univerJS, Ctx);
+        queue.SetAction("getUserService").SetAction("getCurrentUser");
+        return await queue.ResolveQueueAsync<UniverUser>();
+    }
 
-    /// <summary>
-    /// Returns the user info in the manager
-    /// </summary>
-    /// <param name="idUser">User Id</param>
-    /// <returns></returns>
-    public async Task<UniverUser> GetUser(string idUser) => await univerJS.SetAction("getUserService").SetAction("getUser", idUser).ResolveAsync<UniverUser>();
+    public async Task<List<UniverUser>> ListAllUsers()
+    {
+        var queue = new UniverQueue(univerJS, Ctx);
+        queue.SetAction("getUserService").SetAction("list");
+        return await queue.ResolveQueueAsync<List<UniverUser>>();
+    }
 
-    /// <summary>
-    /// Adds an user to the manager
-    /// </summary>
-    /// <param name="user">New user to add</param>
-    /// <param name="setCurrent">True if this new user will be the current</param>
-    /// <returns></returns>
+    public async Task<UniverUser> GetUser(string idUser)
+    {
+        var queue = new UniverQueue(univerJS, Ctx);
+        queue.SetAction("getUserService").SetAction("getUser", idUser);
+        return await queue.ResolveQueueAsync<UniverUser>();
+    }
+
     public async Task AddUser(UniverUser user, bool setCurrent = false)
     {
         await Add(user);
@@ -51,34 +44,37 @@ public class UniverUserManager
             await SetCurrentUser(user);
     }
 
-    /// <summary>
-    /// Adds a list of users to the manager
-    /// </summary>
-    /// <param name="users">Users to add in the list</param>
-    /// <returns></returns>
     public async Task AddUser(params UniverUser[] users)
     {
-        foreach(var user in users)
+        foreach (var user in users)
             await Add(user);
     }
 
-    async Task Add(UniverUser user) => await univerJS.SetAction("getUserService").SetAction("addUser", user).ResolveAsync();
+    public async Task CleanList()
+    {
+        var queue = new UniverQueue(univerJS, Ctx);
+        queue.SetAction("getUserService").SetAction("clear");
+        await queue.ResolveQueueAsync();
+    }
 
-    /// <summary>
-    /// Clear the User List
-    /// </summary>
-    /// <returns></returns>
-    public async Task CleanList() => await univerJS.SetAction("getUserService").SetAction("clear").ResolveAsync();
+    public async Task DeleteUser(string idUser)
+    {
+        var queue = new UniverQueue(univerJS, Ctx);
+        queue.SetAction("getUserService").SetAction("delete", idUser);
+        await queue.ResolveQueueAsync();
+    }
 
-    /// <summary>
-    /// Deletes the selected user by id
-    /// </summary>
-    /// <param name="idUser">User Id in the list</param>
-    public async Task DeleteUser(string idUser) => await univerJS.SetAction("getUserService").SetAction("delete", idUser).ResolveAsync();
+    public async Task SetCurrentUser(UniverUser user)
+    {
+        var queue = new UniverQueue(univerJS, Ctx);
+        queue.SetAction("getUserService").SetAction("setCurrentUser", user);
+        await queue.ResolveQueueAsync();
+    }
 
-    /// <summary>
-    /// Sets the current user for the component
-    /// </summary>
-    /// <param name="user">User object in the list</param>
-    public async Task SetCurrentUser(UniverUser user) => await univerJS.SetAction("getUserService").SetAction("setCurrentUser", user).ResolveAsync();
+    private async Task Add(UniverUser user)
+    {
+        var queue = new UniverQueue(univerJS, Ctx);
+        queue.SetAction("getUserService").SetAction("addUser", user);
+        await queue.ResolveQueueAsync();
+    }
 }

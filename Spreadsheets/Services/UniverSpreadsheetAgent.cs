@@ -1,5 +1,6 @@
 using UniverBlazored.Generic;
 using UniverBlazored.Generic.Data;
+using UniverBlazored.Generic.Services;
 using UniverBlazored.Spreadsheets.Data.Workbook;
 using UniverBlazored.Spreadsheets.Services.Commands;
 
@@ -38,6 +39,8 @@ public class UniverSpreadsheetAgent
 
     private readonly string instanceId;
 
+    public UniverUserManager UserManager { get; }
+
     public DataCommands Data() => new(new USpreadsheetSnapshot(instanceId), univerJS);
     public StyleCommands Styles() => new(new USpreadsheetSnapshot(instanceId), univerJS);
     public ConditionalFormatCommands ConditionalFormats() => new(new USpreadsheetSnapshot(instanceId), univerJS);
@@ -73,6 +76,7 @@ public class UniverSpreadsheetAgent
     {
         this.univerJS = univerJS;
         this.instanceId = instanceId;
+        UserManager = new(univerJS, instanceId);
     }
 
     private UniverQueue CreateStructuralQueue() => new(univerJS, new SpreadsheetOperationContext(instanceId, null, OperationKind.Structural));

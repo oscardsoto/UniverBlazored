@@ -44,7 +44,7 @@ public partial class UniverSpreadsheetControl : IAsyncDisposable
     public Action<UniverSpreadsheetAgent, UniverUserManager> OnAfterComplete { get; set; }
 
     public UniverSpreadsheetAgent? Agent { get; private set; }
-    public UniverUserManager? UserManager { get; private set; }
+    public UniverUserManager? UserManager => Agent?.UserManager;
 
     public string InstanceId { get; } = Guid.NewGuid().ToString("N");
 
@@ -55,7 +55,6 @@ public partial class UniverSpreadsheetControl : IAsyncDisposable
             await UniverInterop?.InitializeAsync(InstanceId, Id);
             await Listeners?.InitializeListenersAsync(InstanceId);
             Agent = new(UniverInterop, InstanceId);
-            UserManager = new(UniverInterop);
 
             isComplete = true;
             StateHasChanged();

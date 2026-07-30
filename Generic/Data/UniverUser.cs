@@ -28,7 +28,7 @@ public struct UniverUser
     /// <summary>
     /// User's type
     /// </summary>
-    UniverUserType Type { get; set; }
+    public UniverUserType Type { get; set; }
 
     /// <summary>
     /// Sets the user's id with the user type
