@@ -250,6 +250,12 @@ function selectRange(instanceId, snapshot){
     return sheet.getRange(snapshot.rangeSelected)
 }
 
+export function areScriptsReady(){
+    return typeof UniverPresets !== 'undefined'
+        && typeof UniverCore !== 'undefined'
+        && typeof UniverDesign !== 'undefined';
+}
+
 export function getSheetsInfo(instanceId){
     var api = getApi(instanceId)
     if (!api) return []

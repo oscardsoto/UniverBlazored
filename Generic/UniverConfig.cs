@@ -37,4 +37,14 @@ public class UniverConfig
     /// Config object that's sended to Univer to initialize the component
     /// </summary>
     public UniverInit InitialConfig { get; set; } = new();
+
+    /// <summary>
+    /// Maximum time (in seconds) to wait for the Univer scripts to become ready before initializing
+    /// </summary>
+    public double ScriptLoadTimeoutSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Interval (in milliseconds) between readiness polls while waiting for the Univer scripts
+    /// </summary>
+    public int ScriptLoadPollIntervalMs { get; set; } = 200;
 }

@@ -10,16 +10,13 @@ using UniverBlazored.Spreadsheets.Services;
 
 namespace UniverBlazored.Spreadsheets.Components;
 
-public partial class UniverSpreadsheetControl : IAsyncDisposable
+public partial class UniverSpreadsheetControl
 {
     [Inject]
     protected IUniverJsInterop? UniverInterop { get; set; }
 
     [Inject]
     protected IUniverSpreadsheetListener? Listeners { get; set; }
-
-    [Inject]
-    protected ISpreadsheetCommandScheduler? Scheduler { get; set; }
 
     private bool isComplete = false;
 
@@ -44,6 +41,7 @@ public partial class UniverSpreadsheetControl : IAsyncDisposable
     public Action<UniverSpreadsheetAgent, UniverUserManager> OnAfterComplete { get; set; }
 
     public UniverSpreadsheetAgent? Agent { get; private set; }
+    
     public UniverUserManager? UserManager => Agent?.UserManager;
 
     public string InstanceId { get; } = Guid.NewGuid().ToString("N");
@@ -67,14 +65,5 @@ public partial class UniverSpreadsheetControl : IAsyncDisposable
             OnAfterComplete?.Invoke(Agent, UserManager);
             return;
         }
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (Scheduler is not null)
-            await Scheduler.DisposeAsync();
-
-        if (Listeners is IAsyncDisposable asyncDisposable)
-            await asyncDisposable.DisposeAsync();
     }
 }

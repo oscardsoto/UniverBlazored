@@ -63,8 +63,6 @@ public sealed class SafeUniverJsInterop : IUniverJsInterop
     public Task<T> ExecuteAtomicAsync<T>(SpreadsheetOperationContext context, Func<IUniverJsInterop, Task<T>> operation)
         => scheduler.ExecuteSheetAsync(context, () => operation(inner));
 
-    public string[] GetUniverLinks() => inner.GetUniverLinks();
-
     private Task RouteByContext(SpreadsheetOperationContext context, Func<Task> operation)
         => context.SheetId is not null && context.Kind is OperationKind.Sheet
             ? scheduler.EnqueueSheet(context, () => Trace(GetOperationName(), context.SheetId, operation))

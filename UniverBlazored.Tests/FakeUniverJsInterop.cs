@@ -108,8 +108,6 @@ public sealed class FakeUniverJsInterop : IUniverJsInterop
         return ApplyDelay();
     }
 
-    public string[] GetUniverLinks() => Array.Empty<string>();
-
     public void Clear() => Actions.Clear();
 
     private async Task ApplyDelay()

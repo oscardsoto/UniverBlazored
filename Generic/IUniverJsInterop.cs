@@ -28,5 +28,4 @@ public interface IUniverJsInterop
 
     Task<T> ResolveActionAsync<T>(string name, params object[] args);
     Task ResolveActionAsync(string name, params object[] args);
-    string[] GetUniverLinks();
 }

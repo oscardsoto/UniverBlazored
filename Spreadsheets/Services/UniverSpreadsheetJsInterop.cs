@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json.Nodes;
 using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
@@ -21,7 +22,7 @@ public class UniverSpreadsheetJsInterop : IUniverJsInterop
     {
         this.runtime = runtime;
         config = options.Value;
-        moduleTask = new (() => runtime.InvokeAsync<IJSObjectReference>("import", "./_content/UniverBlazored/univer/xlsx/initUniver.js?v=1.5").AsTask());
+        moduleTask = new (() => runtime.InvokeAsync<IJSObjectReference>("import", "./_content/UniverBlazored/univer/xlsx/initUniver.js?v=1.6").AsTask());
         actionQueue = new();
     }
 
@@ -30,18 +31,17 @@ public class UniverSpreadsheetJsInterop : IUniverJsInterop
 
     public async Task InitializeAsync(string instanceId, string newIdDiv)
     {
-        var imports = new UniverJsImports(runtime);
-        var univers = GetUniverLinks();
-        foreach (var item in univers)
-        {
-            var ok = await imports.ImportLibrary(item);
-            if (ok)
-                continue;
-        }
-            
-        await imports.DisposeAsync();
-        await Task.Delay(1000);
         var module = await moduleTask.Value;
+
+        var timeout = TimeSpan.FromSeconds(config.ScriptLoadTimeoutSeconds);
+        var sw = Stopwatch.StartNew();
+        while (!await module.InvokeAsync<bool>("areScriptsReady"))
+        {
+            if (sw.Elapsed >= timeout)
+                throw new TimeoutException($"Univer scripts did not become ready within {timeout.TotalSeconds} seconds. Please ensure that the UniverSpreadsheetResources component is included in your page.");
+            await Task.Delay(config.ScriptLoadPollIntervalMs);
+        }
+
         config.InitialConfig.SetNewIdDiv(newIdDiv);
         await module.InvokeVoidAsync("initUniver", instanceId, config.InitialConfig, config.Language);
     }
@@ -129,90 +129,6 @@ public class UniverSpreadsheetJsInterop : IUniverJsInterop
 
     public Task<T> ExecuteAtomicAsync<T>(SpreadsheetOperationContext context, Func<IUniverJsInterop, Task<T>> operation)
         => operation(this);
-
-    public string[] GetUniverLinks()
-    {
-        List<string> links = [
-            "https://unpkg.com/react@18.3.1/umd/react.production.min.js",
-            "https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js",
-            "https://unpkg.com/rxjs/dist/bundles/rxjs.umd.min.js",
-            "https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js",
-
-            $"https://unpkg.com/@univerjs/presets@{config.Version}/lib/umd/index.js",
-            $"https://unpkg.com/@univerjs/preset-sheets-core@{config.Version}/lib/umd/index.js",
-            $"https://unpkg.com/@univerjs/preset-sheets-core@{config.Version}/lib/umd/locales/{config.Language}.js",
-            $"https://unpkg.com/@univerjs/preset-sheets-core@{config.Version}/lib/index.css",
-
-            $"https://unpkg.com/@univerjs/preset-sheets-find-replace@{config.Version}/lib/umd/index.js",
-            $"https://unpkg.com/@univerjs/preset-sheets-find-replace@{config.Version}/lib/umd/locales/{config.Language}.js",
-            $"https://unpkg.com/@univerjs/preset-sheets-find-replace@{config.Version}/lib/index.css"
-        ];
-
-        var univerConfig = config.InitialConfig;
-        if (univerConfig.hasShort)
-            links.AddRange([
-                $"https://unpkg.com/@univerjs/preset-sheets-sort@{config.Version}/lib/umd/index.js",
-                $"https://unpkg.com/@univerjs/preset-sheets-sort@{config.Version}/lib/umd/locales/{config.Language}.js",
-                $"https://unpkg.com/@univerjs/preset-sheets-sort@{config.Version}/lib/index.css"
-            ]);
-
-        if (univerConfig.hasDataValidation)
-            links.AddRange([
-                $"https://unpkg.com/@univerjs/preset-sheets-data-validation@{config.Version}/lib/umd/index.js",
-                $"https://unpkg.com/@univerjs/preset-sheets-data-validation@{config.Version}/lib/umd/locales/{config.Language}.js",
-                $"https://unpkg.com/@univerjs/preset-sheets-data-validation@{config.Version}/lib/index.css"
-            ]);
-
-        if (univerConfig.hasFilter)
-            links.AddRange([
-                $"https://unpkg.com/@univerjs/preset-sheets-filter@{config.Version}/lib/umd/index.js",
-                $"https://unpkg.com/@univerjs/preset-sheets-filter@{config.Version}/lib/umd/locales/{config.Language}.js",
-                $"https://unpkg.com/@univerjs/preset-sheets-filter@{config.Version}/lib/index.css"
-            ]);
-
-        if (univerConfig.hasConditionalFormatting)
-            links.AddRange([
-                $"https://unpkg.com/@univerjs/preset-sheets-conditional-formatting@{config.Version}/lib/umd/index.js",
-                $"https://unpkg.com/@univerjs/preset-sheets-conditional-formatting@{config.Version}/lib/umd/locales/{config.Language}.js",
-                $"https://unpkg.com/@univerjs/preset-sheets-conditional-formatting@{config.Version}/lib/index.css"
-            ]);
-
-        if (univerConfig.hasHyperLink)
-            links.AddRange([
-                $"https://unpkg.com/@univerjs/preset-sheets-hyper-link@{config.Version}/lib/umd/index.js",
-                $"https://unpkg.com/@univerjs/preset-sheets-hyper-link@{config.Version}/lib/umd/locales/{config.Language}.js",
-                $"https://unpkg.com/@univerjs/preset-sheets-hyper-link@{config.Version}/lib/index.css"
-            ]);
-
-        if (univerConfig.hasDrawing)
-            links.AddRange([
-                $"https://unpkg.com/@univerjs/preset-sheets-drawing@{config.Version}/lib/umd/index.js",
-                $"https://unpkg.com/@univerjs/preset-sheets-drawing@{config.Version}/lib/umd/locales/{config.Language}.js",
-                $"https://unpkg.com/@univerjs/preset-sheets-drawing@{config.Version}/lib/index.css"
-            ]);
-
-        if (univerConfig.hasThreadComment)
-            links.AddRange([
-                $"https://unpkg.com/@univerjs/preset-sheets-thread-comment@{config.Version}/lib/umd/index.js",
-                $"https://unpkg.com/@univerjs/preset-sheets-thread-comment@{config.Version}/lib/umd/locales/{config.Language}.js",
-                $"https://unpkg.com/@univerjs/preset-sheets-thread-comment@{config.Version}/lib/index.css"
-            ]);
-
-        if (univerConfig.hasWatermark)
-            links.AddRange([
-                $"https://unpkg.com/@univerjs/watermark@{config.Version}/lib/umd/index.js",
-                $"https://unpkg.com/@univerjs/watermark@{config.Version}/lib/umd/facade.js",
-            ]);
-
-        if (univerConfig.hasCrosshair)
-            links.AddRange([
-                $"https://unpkg.com/@univerjs/sheets-crosshair-highlight@{config.Version}/lib/umd/index.js",
-                $"https://unpkg.com/@univerjs/sheets-crosshair-highlight@{config.Version}/lib/umd/facade.js",
-                $"https://unpkg.com/@univerjs/sheets-crosshair-highlight@{config.Version}/lib/index.css"
-            ]);
-        
-        return links.ToArray();
-    }
     
     public async Task<T> ResolveActionAsync<T>(string name, params object[] args)
     {
