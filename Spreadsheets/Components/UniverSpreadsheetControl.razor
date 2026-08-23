@@ -4,6 +4,10 @@
         width: 100%;
         min-height: 600px;
     }
+    #@Id{
+        height: 600px;
+        margin: 15px 10px;
+    }
     .uov-overlay {
         position: absolute;
         inset: 0;
@@ -35,13 +39,13 @@
     }
 </style>
 
-<div class="uov-container @CssClass">
-    <div id="@Id"></div>
+<div class="uov-container">
+    <div id="@Id" class="@CssClass"></div>
     @if (IsLoading)
     {
         <div class="uov-overlay">
             <div class="uov-spinner"></div>
-            <span class="uov-text">Cargando...</span>
+            <span class="uov-text" dir="auto">@LoadingText</span>
         </div>
     }
 </div>

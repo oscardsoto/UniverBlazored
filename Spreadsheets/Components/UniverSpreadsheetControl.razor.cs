@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
 using UniverBlazored.Generic;
 using UniverBlazored.Generic.Services;
@@ -17,6 +18,9 @@ public partial class UniverSpreadsheetControl
 
     [Inject]
     protected IUniverSpreadsheetListener? Listeners { get; set; }
+
+    [Inject]
+    protected IOptions<UniverConfig>? ConfigOptions { get; set; }
 
     private bool isComplete = false;
 
@@ -37,11 +41,37 @@ public partial class UniverSpreadsheetControl
     [Parameter]
     public string CssClass { get; set; } = "";
 
-    [Parameter]
-    public bool IsLoading { get; set; } = false;
+    bool loading = false;
+
+    public bool IsLoading
+    { 
+        get => loading; 
+        set 
+        { 
+            loading = value; 
+            StateHasChanged();
+        } 
+    }
+
+    static readonly Dictionary<string, string> loadingTexts = new()
+    {
+        ["en-US"] = "Loading...",
+        ["ru-RU"] = "Загрузка...",
+        ["zh-CN"] = "加载中...",
+        ["vi-VN"] = "Đang tải...",
+        ["fa-IR"] = "در حال بارگذاری...",
+        ["ja-JP"] = "読み込み中...",
+        ["ko-KR"] = "불러오는 중...",
+        ["es-ES"] = "Cargando...",
+        ["ca-ES"] = "Carregant..."
+    };
+
+    public string LoadingText =>
+        loadingTexts.TryGetValue(ConfigOptions?.Value?.Language?.Value ?? "", out var text)
+            ? text : loadingTexts["en-US"];
 
     [Parameter]
-    public Action<UniverSpreadsheetAgent, UniverUserManager> OnAfterComplete { get; set; }
+    public Func<UniverSpreadsheetAgent, UniverUserManager, Task>? OnAfterComplete { get; set; }
 
     public UniverSpreadsheetAgent? Agent { get; private set; }
     
@@ -65,7 +95,16 @@ public partial class UniverSpreadsheetControl
         if (!firstRender && isComplete)
         {
             isComplete = false;
-            OnAfterComplete?.Invoke(Agent, UserManager);
+            IsLoading = true;
+            try
+            {
+                if (OnAfterComplete is not null)
+                    await OnAfterComplete(Agent, UserManager);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
             return;
         }
     }

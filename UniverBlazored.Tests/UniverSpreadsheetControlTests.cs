@@ -30,10 +30,11 @@ public class UniverSpreadsheetControlTests
 
         UniverSpreadsheetAgent? completedAgent = null;
         UniverUserManager? completedUserManager = null;
-        Action<UniverSpreadsheetAgent, UniverUserManager> onAfterComplete = (agent, userManager) =>
+        Func<UniverSpreadsheetAgent, UniverUserManager, Task> onAfterComplete = (agent, userManager) =>
         {
             completedAgent = agent;
             completedUserManager = userManager;
+            return Task.CompletedTask;
         };
 
         var control = new TestableUniverSpreadsheetControl(interop, new FakeListener());
@@ -45,6 +46,39 @@ public class UniverSpreadsheetControlTests
 
         Assert.Same(control.Agent, completedAgent);
         Assert.Same(control.UserManager, completedUserManager);
+    }
+
+    [Fact]
+    public async Task IsLoading_stays_true_until_OnAfterComplete_completes()
+    {
+        var interop = new FakeUniverJsInterop();
+        var control = new TestableUniverSpreadsheetControl(interop, new FakeListener());
+        var renderer = new TestRenderer();
+        var callbackFinished = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var isLoadingDuringCallback = false;
+
+        Func<UniverSpreadsheetAgent, UniverUserManager, Task> onAfterComplete = (_, _) =>
+        {
+            isLoadingDuringCallback = control.IsLoading;
+            return callbackFinished.Task;
+        };
+
+        var renderTask = renderer.RenderAsync(control, ParameterView.FromDictionary(new Dictionary<string, object?>
+        {
+            [nameof(UniverSpreadsheetControl.OnAfterComplete)] = onAfterComplete,
+        }));
+
+        Assert.True(isLoadingDuringCallback);
+        Assert.True(control.IsLoading);
+
+        callbackFinished.SetResult();
+        await renderTask.WaitAsync(TimeSpan.FromSeconds(10));
+
+        var deadline = DateTime.UtcNow.Add(TimeSpan.FromSeconds(5));
+        while (control.IsLoading && DateTime.UtcNow < deadline)
+            await Task.Delay(10);
+
+        Assert.False(control.IsLoading);
     }
 
     private sealed class TestRenderer : Renderer
