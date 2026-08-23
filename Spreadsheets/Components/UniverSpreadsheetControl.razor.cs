@@ -38,6 +38,9 @@ public partial class UniverSpreadsheetControl
     public string CssClass { get; set; } = "";
 
     [Parameter]
+    public bool IsLoading { get; set; } = false;
+
+    [Parameter]
     public Action<UniverSpreadsheetAgent, UniverUserManager> OnAfterComplete { get; set; }
 
     public UniverSpreadsheetAgent? Agent { get; private set; }
