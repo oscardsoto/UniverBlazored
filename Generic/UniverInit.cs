@@ -61,11 +61,6 @@ public struct UniverInit
     public string newSheetName { get; set; } = "UniverSheet";
 
     /// <summary>
-    /// Id of the div that will execute Univer (default is "uXlsxComp")
-    /// </summary>
-    public string idDiv { get; set; } = "uXlsxComp";
-
-    /// <summary>
     /// Configuration for fonts
     /// </summary>
     /// <returns></returns>
@@ -75,10 +70,4 @@ public struct UniverInit
     /// Config object for UniverJS
     /// </summary>
     public UniverInit() { }
-
-    /// <summary>
-    /// Set the value for the div's Id to execute Univer
-    /// </summary>
-    /// <param name="newId"></param>
-    public void SetNewIdDiv(string newId) => idDiv = newId;
 }

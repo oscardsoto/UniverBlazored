@@ -22,14 +22,17 @@ public class UniverSpreadsheetJsInterop : IUniverJsInterop
     {
         this.runtime = runtime;
         config = options.Value;
-        moduleTask = new (() => runtime.InvokeAsync<IJSObjectReference>("import", "./_content/UniverBlazored/univer/xlsx/initUniver.js?v=1.6").AsTask());
+        moduleTask = new (() => runtime.InvokeAsync<IJSObjectReference>("import", "./_content/UniverBlazored/univer/xlsx/initUniver.js?v=1.7").AsTask());
         actionQueue = new();
     }
 
-    public async Task InitializeAsync(string newIdDiv)
-        => await InitializeAsync("default", newIdDiv);
+    public Task InitializeAsync(string newIdDiv)
+        => InitializeAsync("default", newIdDiv);
 
-    public async Task InitializeAsync(string instanceId, string newIdDiv)
+    public Task InitializeAsync(string instanceId, string newIdDiv)
+        => InitializeAsync(instanceId, newIdDiv, config.InitialConfig);
+
+    public async Task InitializeAsync(string instanceId, string newIdDiv, UniverInit initConfig)
     {
         var module = await moduleTask.Value;
 
@@ -42,8 +45,7 @@ public class UniverSpreadsheetJsInterop : IUniverJsInterop
             await Task.Delay(config.ScriptLoadPollIntervalMs);
         }
 
-        config.InitialConfig.SetNewIdDiv(newIdDiv);
-        await module.InvokeVoidAsync("initUniver", instanceId, config.InitialConfig, config.Language);
+        await module.InvokeVoidAsync("initUniver", instanceId, initConfig, config.Language, newIdDiv);
     }
 
     public IUniverJsInterop SetAction(string action, params object[] args)

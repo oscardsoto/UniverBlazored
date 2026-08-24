@@ -1,4 +1,5 @@
 using Microsoft.JSInterop;
+using UniverBlazored.Generic;
 using UniverBlazored.Generic.Data;
 
 namespace UniverBlazored.Tests;
@@ -27,6 +28,12 @@ public sealed class FakeUniverJsInterop : IUniverJsInterop
     }
 
     public Task InitializeAsync(string instanceId, string newIdDiv)
+    {
+        InitializationCount++;
+        return Task.CompletedTask;
+    }
+
+    public Task InitializeAsync(string instanceId, string newIdDiv, UniverInit initConfig)
     {
         InitializationCount++;
         return Task.CompletedTask;

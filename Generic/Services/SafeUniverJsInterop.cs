@@ -32,6 +32,9 @@ public sealed class SafeUniverJsInterop : IUniverJsInterop
     public Task InitializeAsync(string instanceId, string newIdDiv)
         => ExecuteGlobal("InitializeAsync", () => inner.InitializeAsync(instanceId, newIdDiv), instanceId, newIdDiv);
 
+    public Task InitializeAsync(string instanceId, string newIdDiv, UniverInit initConfig)
+        => ExecuteGlobal("InitializeAsync", () => inner.InitializeAsync(instanceId, newIdDiv, initConfig), instanceId, newIdDiv);
+
     public IUniverJsInterop SetAction(string action, params object[] args) => inner.SetAction(action, args);
 
     public Task ResolveAsync(SpreadsheetOperationContext context)

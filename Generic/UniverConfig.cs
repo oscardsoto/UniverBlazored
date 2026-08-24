@@ -34,7 +34,9 @@ public class UniverConfig
     public UniversLanguage Language { get; set; } = UniversLanguage.ENGLISH;
 
     /// <summary>
-    /// Config object that's sended to Univer to initialize the component
+    /// Manifest of presets that UniverSpreadsheetResources preloads from CDN.
+    /// Individual components receive their own initialization config via the InitConfig parameter;
+    /// presets enabled there must be preloaded here.
     /// </summary>
     public UniverInit InitialConfig { get; set; } = new();
 

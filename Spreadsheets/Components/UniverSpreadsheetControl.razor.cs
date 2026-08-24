@@ -24,22 +24,17 @@ public partial class UniverSpreadsheetControl
 
     private bool isComplete = false;
 
-    string id = "uXlsxComp";
-
-    [Parameter]
-    public string Id
-    {
-        get { return id; }
-        set
-        {
-            if (isComplete)
-                return;
-            id = value;
-        }
-    }
+    public string Id { get; } = $"unv-{Guid.NewGuid():N}";
 
     [Parameter]
     public string CssClass { get; set; } = "";
+
+    /// <summary>
+    /// Per-component initialization configuration sent to UniverJS.
+    /// Presets enabled here must have their scripts preloaded via the global UniverConfig.InitialConfig manifest.
+    /// </summary>
+    [Parameter]
+    public UniverInit InitConfig { get; set; } = new();
 
     bool loading = false;
 
@@ -77,15 +72,13 @@ public partial class UniverSpreadsheetControl
     
     public UniverUserManager? UserManager => Agent?.UserManager;
 
-    public string InstanceId { get; } = Guid.NewGuid().ToString("N");
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            await UniverInterop?.InitializeAsync(InstanceId, Id);
-            await Listeners?.InitializeListenersAsync(InstanceId);
-            Agent = new(UniverInterop, InstanceId);
+            await UniverInterop?.InitializeAsync(Id, Id, InitConfig);
+            await Listeners?.InitializeListenersAsync(Id);
+            Agent = new(UniverInterop, Id);
 
             isComplete = true;
             StateHasChanged();

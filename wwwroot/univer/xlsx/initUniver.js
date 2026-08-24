@@ -18,7 +18,7 @@ function getSession(instanceId) {
     return sessions.get(instanceId);
 }
 
-export function initUniver(instanceId, config, language) {
+export function initUniver(instanceId, config, language, containerId) {
     const { createUniver } = UniverPresets;
     const { LocaleType, merge } = UniverCore;
     const { defaultTheme } = UniverDesign;
@@ -28,7 +28,7 @@ export function initUniver(instanceId, config, language) {
         locale: languageConfig.locale,
         locales: languageConfig.locales,
         theme: defaultTheme,
-        presets: getPresets(config),
+        presets: getPresets(config, containerId),
         plugins: getPlugins(config)
     });
 
@@ -118,11 +118,11 @@ function getLocaleGlobalValue(localeKey){
     return globalThis[localeKey]
 }
 
-function getPresets(config){
+function getPresets(config, containerId){
     var presets = []
     const { UniverSheetsCorePreset } = UniverPresetSheetsCore
     presets.push(UniverSheetsCorePreset({
-        container: config.idDiv,
+        container: containerId,
         customFontFamily: config.fontsConfig
     }))
 

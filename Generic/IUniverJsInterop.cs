@@ -12,6 +12,7 @@ public interface IUniverJsInterop
 
     Task InitializeAsync(string newIdDiv);
     Task InitializeAsync(string instanceId, string newIdDiv);
+    Task InitializeAsync(string instanceId, string newIdDiv, UniverInit initConfig);
     IUniverJsInterop SetAction(string action, params object[] args);
     Task ResolveAsync();
     Task<T> ResolveAsync<T>();
